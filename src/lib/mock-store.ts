@@ -3,6 +3,8 @@
 export interface MockUser {
   id: string;
   name: string;
+  batch: string;
+  purpose: string;
   created_at: string;
 }
 

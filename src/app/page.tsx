@@ -6,7 +6,7 @@ import CheckinUpload from "@/components/CheckinUpload";
 import StatusCard from "@/components/StatusCard";
 import Leaderboard from "@/components/Leaderboard";
 
-type User = { id: string; name: string };
+type User = { id: string; name: string; batch?: string; purpose?: string };
 type Checkin = {
   id: string;
   status: string;

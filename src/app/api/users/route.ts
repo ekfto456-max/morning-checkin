@@ -3,7 +3,7 @@ import { supabase } from "@/lib/supabase";
 import { isUsingMockMode, mockUsers, generateId } from "@/lib/mock-store";
 
 export async function POST(request: NextRequest) {
-  const { name } = await request.json();
+  const { name, batch, purpose } = await request.json();
 
   if (!name || !name.trim()) {
     return NextResponse.json(
@@ -13,6 +13,8 @@ export async function POST(request: NextRequest) {
   }
 
   const trimmedName = name.trim();
+  const trimmedBatch = (batch || "").trim();
+  const trimmedPurpose = (purpose || "").trim();
 
   // Mock 모드: Supabase 없이 로컬 메모리 사용
   if (isUsingMockMode()) {
@@ -24,6 +26,8 @@ export async function POST(request: NextRequest) {
     const newUser = {
       id: generateId(),
       name: trimmedName,
+      batch: trimmedBatch,
+      purpose: trimmedPurpose,
       created_at: new Date().toISOString(),
     };
     mockUsers.push(newUser);
@@ -43,7 +47,11 @@ export async function POST(request: NextRequest) {
 
   const { data, error } = await supabase
     .from("users")
-    .insert({ name: trimmedName })
+    .insert({
+      name: trimmedName,
+      batch: trimmedBatch,
+      purpose: trimmedPurpose,
+    })
     .select()
     .single();
 
