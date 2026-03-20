@@ -8,6 +8,7 @@ import Leaderboard from "@/components/Leaderboard";
 import ExemptionCard from "@/components/ExemptionCard";
 import AttendanceCalendar from "@/components/AttendanceCalendar";
 import TodayFeed from "@/components/TodayFeed";
+import SealCard from "@/components/SealCard";
 
 type User = { id: string; name: string; batch?: string; purpose?: string };
 type Checkin = {
@@ -25,7 +26,7 @@ export default function Home() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [loading, setLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [activeTab, setActiveTab] = useState<"home" | "calendar">("home");
+  const [activeTab, setActiveTab] = useState<"home" | "seal" | "calendar">("home");
 
   // 실시간 시계
   useEffect(() => {
@@ -166,6 +167,16 @@ export default function Home() {
           🏠 홈
         </button>
         <button
+          onClick={() => setActiveTab("seal")}
+          className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
+            activeTab === "seal"
+              ? "bg-zinc-700 text-white"
+              : "text-zinc-400 hover:text-zinc-300"
+          }`}
+        >
+          🦭 물개
+        </button>
+        <button
           onClick={() => setActiveTab("calendar")}
           className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
             activeTab === "calendar"
@@ -199,6 +210,11 @@ export default function Home() {
 
           {/* 리더보드 */}
           <Leaderboard refreshKey={refreshKey} />
+        </>
+      ) : activeTab === "seal" ? (
+        <>
+          {/* 물개 카드 */}
+          <SealCard userId={user.id} />
         </>
       ) : (
         <>

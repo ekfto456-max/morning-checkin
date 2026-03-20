@@ -1,7 +1,40 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { calculatePenalty } from "@/lib/penalty";
-import { isUsingMockMode, mockCheckins, generateId } from "@/lib/mock-store";
+import { isUsingMockMode, mockCheckins, generateId, getMockSeal, updateMockSeal } from "@/lib/mock-store";
+
+// 출석 시 물개 EXP 지급
+async function addSealExp(status: string, checkinHour: number) {
+  let amount = 0;
+  let reason = "";
+
+  if (status === "on_time") {
+    amount = 10;
+    reason = "정시 출석";
+    if (checkinHour < 7) {
+      amount = 20;
+      reason = "새벽 기상 보너스!";
+    }
+  }
+  // 지각은 EXP 0
+
+  if (amount <= 0) return;
+
+  if (isUsingMockMode()) {
+    const seal = getMockSeal();
+    updateMockSeal({ exp: seal.exp + amount });
+    return;
+  }
+
+  // Supabase: 물개 EXP 증가
+  const { data: seal } = await supabase.from("seal").select("*").single();
+  if (seal) {
+    await supabase
+      .from("seal")
+      .update({ exp: seal.exp + amount })
+      .eq("id", seal.id);
+  }
+}
 
 export async function POST(request: NextRequest) {
   const formData = await request.formData();
@@ -58,6 +91,10 @@ export async function POST(request: NextRequest) {
       penalty,
     };
     mockCheckins.push(newCheckin);
+
+    // 물개 EXP 지급
+    await addSealExp(status, now.getHours());
+
     return NextResponse.json(newCheckin);
   }
 
@@ -117,6 +154,9 @@ export async function POST(request: NextRequest) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  // 물개 EXP 지급
+  await addSealExp(status, now.getHours());
 
   return NextResponse.json(data);
 }
