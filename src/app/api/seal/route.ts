@@ -122,33 +122,16 @@ async function handleFeed(body: { user_id?: string }) {
     );
   }
 
-  const { startOfDay, endOfDay } = getTodayRange();
-
-  // Mock 모드
+  // Mock 모드 (무제한 먹이)
   if (isUsingMockMode()) {
-    // 오늘 이미 먹이를 줬는지 확인
-    const alreadyFed = mockSealFeeds.find((f) => {
-      const t = new Date(f.fed_at);
-      return f.user_id === user_id && t >= startOfDay && t < endOfDay;
-    });
-
-    if (alreadyFed) {
-      return NextResponse.json(
-        { error: "오늘 이미 먹이를 줬습니다!" },
-        { status: 409 }
-      );
-    }
-
-    // 먹이 기록 추가
     mockSealFeeds.push({
       id: generateId(),
       user_id,
       fed_at: new Date().toISOString(),
     });
 
-    // HP 증가 (최대 100)
     const seal = getMockSeal();
-    const newHp = Math.min(100, seal.hp + 5);
+    const newHp = Math.min(100, seal.hp + 3);
     const updated = updateMockSeal({ hp: newHp, last_fed: new Date().toISOString() });
 
     return NextResponse.json({
@@ -158,35 +141,14 @@ async function handleFeed(body: { user_id?: string }) {
     });
   }
 
-  // Supabase 모드
-  const { data: existingFeed } = await supabase
-    .from("seal_feeds")
-    .select("*")
-    .eq("user_id", user_id)
-    .gte("fed_at", startOfDay.toISOString())
-    .lt("fed_at", endOfDay.toISOString())
-    .single();
-
-  if (existingFeed) {
-    return NextResponse.json(
-      { error: "오늘 이미 먹이를 줬습니다!" },
-      { status: 409 }
-    );
-  }
-
-  // 먹이 기록
-  const { error: feedError } = await supabase
+  // Supabase 모드 (무제한 먹이)
+  await supabase
     .from("seal_feeds")
     .insert({
       user_id,
       fed_at: new Date().toISOString(),
     });
 
-  if (feedError) {
-    return NextResponse.json({ error: feedError.message }, { status: 500 });
-  }
-
-  // 물개 HP 업데이트
   const { data: seal } = await supabase
     .from("seal")
     .select("*")
@@ -199,7 +161,7 @@ async function handleFeed(body: { user_id?: string }) {
     );
   }
 
-  const newHp = Math.min(100, seal.hp + 5);
+  const newHp = Math.min(100, seal.hp + 3);
   const { data: updated, error: updateError } = await supabase
     .from("seal")
     .update({ hp: newHp, last_fed: new Date().toISOString() })

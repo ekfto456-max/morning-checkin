@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { isUsingMockMode, mockExemptions, generateId } from "@/lib/mock-store";
 
-// GET: 사용자의 미사용 면제권 조회
+// GET: 사용자의 면제권 조회 (미사용 + 주간 자동 지급 체크)
 export async function GET(request: NextRequest) {
   const userId = request.nextUrl.searchParams.get("user_id");
 
@@ -13,16 +13,59 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // Mock 모드
+  // 이번 주 월요일 계산
+  const now = new Date();
+  const dayOfWeek = now.getDay(); // 0=일, 1=월, ...
+  const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+  const thisMonday = new Date(now.getFullYear(), now.getMonth(), now.getDate() + mondayOffset);
+  const thisMondayStr = thisMonday.toISOString().split("T")[0];
+
   if (isUsingMockMode()) {
+    // 이번 주에 이미 지급했는지 확인
+    const alreadyGrantedThisWeek = mockExemptions.some((e) => {
+      const grantedDate = e.granted_at.split("T")[0];
+      return e.user_id === userId && grantedDate >= thisMondayStr;
+    });
+
+    if (!alreadyGrantedThisWeek) {
+      // 이번 주 면제권 자동 지급
+      mockExemptions.push({
+        id: generateId(),
+        user_id: userId,
+        reason: `${now.getMonth() + 1}월 ${Math.ceil(now.getDate() / 7)}주차 면제권`,
+        granted_at: now.toISOString(),
+        used_at: null,
+        used_for_date: null,
+      });
+    }
+
     const unused = mockExemptions.filter(
       (e) => e.user_id === userId && e.used_at === null
     );
-    return NextResponse.json({ exemptions: unused });
+    const used = mockExemptions.filter(
+      (e) => e.user_id === userId && e.used_at !== null
+    );
+    return NextResponse.json({ exemptions: unused, usedExemptions: used });
   }
 
-  // Supabase 모드
-  const { data, error } = await supabase
+  // Supabase 모드: 이번 주 지급 여부 확인
+  const { data: thisWeekExemptions } = await supabase
+    .from("exemptions")
+    .select("*")
+    .eq("user_id", userId)
+    .gte("granted_at", `${thisMondayStr}T00:00:00.000Z`);
+
+  if (!thisWeekExemptions || thisWeekExemptions.length === 0) {
+    // 이번 주 면제권 자동 지급
+    await supabase.from("exemptions").insert({
+      user_id: userId,
+      reason: `${now.getMonth() + 1}월 ${Math.ceil(now.getDate() / 7)}주차 면제권`,
+      granted_at: now.toISOString(),
+    });
+  }
+
+  // 미사용 면제권 조회
+  const { data: unused, error } = await supabase
     .from("exemptions")
     .select("*")
     .eq("user_id", userId)
@@ -33,7 +76,16 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ exemptions: data });
+  // 사용된 면제권도 조회
+  const { data: used } = await supabase
+    .from("exemptions")
+    .select("*")
+    .eq("user_id", userId)
+    .not("used_at", "is", null)
+    .order("used_at", { ascending: false })
+    .limit(5);
+
+  return NextResponse.json({ exemptions: unused || [], usedExemptions: used || [] });
 }
 
 // POST: 면제권 사용 (오늘 날짜에 대해)
@@ -49,7 +101,7 @@ export async function POST(request: NextRequest) {
   }
 
   const today = new Date();
-  const todayStr = today.toISOString().split("T")[0]; // YYYY-MM-DD
+  const todayStr = today.toISOString().split("T")[0];
 
   // Mock 모드
   if (isUsingMockMode()) {
@@ -64,7 +116,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 이미 오늘 면제권을 사용했는지 확인
     const alreadyUsedToday = mockExemptions.find(
       (e) => e.user_id === user_id && e.used_for_date === todayStr
     );
@@ -82,7 +133,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ exemption });
   }
 
-  // Supabase 모드: 오늘 이미 면제권 사용했는지 확인
+  // Supabase 모드
   const { data: alreadyUsed } = await supabase
     .from("exemptions")
     .select("*")
@@ -97,7 +148,6 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // 면제권 사용 처리
   const { data, error } = await supabase
     .from("exemptions")
     .update({
