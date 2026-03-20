@@ -5,6 +5,9 @@ import LoginForm from "@/components/LoginForm";
 import CheckinUpload from "@/components/CheckinUpload";
 import StatusCard from "@/components/StatusCard";
 import Leaderboard from "@/components/Leaderboard";
+import ExemptionCard from "@/components/ExemptionCard";
+import AttendanceCalendar from "@/components/AttendanceCalendar";
+import TodayFeed from "@/components/TodayFeed";
 
 type User = { id: string; name: string; batch?: string; purpose?: string };
 type Checkin = {
@@ -22,6 +25,7 @@ export default function Home() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [loading, setLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [activeTab, setActiveTab] = useState<"home" | "calendar">("home");
 
   // 실시간 시계
   useEffect(() => {
@@ -81,6 +85,10 @@ export default function Home() {
     setTotalPenalty(0);
   };
 
+  const handleExemptionUsed = () => {
+    setRefreshKey((prev) => prev + 1);
+  };
+
   const formatClock = (date: Date) => {
     const h = date.getHours().toString().padStart(2, "0");
     const m = date.getMinutes().toString().padStart(2, "0");
@@ -92,8 +100,8 @@ export default function Home() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <p className="text-4xl mb-4">{"\uD83D\uDC80"}</p>
-          <p className="text-zinc-500">{"\uB85C\uB529 \uC911..."}</p>
+          <p className="text-4xl mb-4">💀</p>
+          <p className="text-zinc-500">로딩 중...</p>
         </div>
       </div>
     );
@@ -106,25 +114,27 @@ export default function Home() {
   const clock = formatClock(currentTime);
 
   return (
-    <main className="max-w-lg mx-auto px-4 py-6 space-y-5">
+    <main className="max-w-lg mx-auto px-4 py-6 pb-24 space-y-5">
       {/* 헤더 */}
       <header className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold flex items-center gap-2">
-            <span>{"\uD83D\uDC80"}</span>
-            <span>{"\uC8FD\uAE30\uC2A4"}</span>
+            <span>💀</span>
+            <span>죽기스</span>
           </h1>
           <p className="text-sm text-zinc-500">
-            {"\uC548\uB155\uD558\uC138\uC694, "}
-            <span className="font-medium text-zinc-300">{user.name}</span>
-            {"\uB2D8"}
+            안녕하세요,{" "}
+            <span className="font-medium text-zinc-300">{user.name}</span>님
+            {user.batch && (
+              <span className="text-zinc-600 ml-1">({user.batch})</span>
+            )}
           </p>
         </div>
         <button
           onClick={handleLogout}
           className="text-sm text-zinc-600 hover:text-zinc-400 transition-colors"
         >
-          {"\uB85C\uADF8\uC544\uC6C3"}
+          로그아웃
         </button>
       </header>
 
@@ -138,23 +148,71 @@ export default function Home() {
           <span className="text-3xl text-zinc-500">{clock.s}</span>
         </div>
         <p className="text-sm text-zinc-500">
-          {"\uB9C8\uAC10: "}
-          <span className="text-red-500 font-semibold">
-            {"\uC624\uC804 10:04"}
-          </span>
+          마감:{" "}
+          <span className="text-red-500 font-semibold">오전 10:04</span>
         </p>
       </div>
 
-      {/* 오늘의 상태 */}
-      <StatusCard checkin={todayCheckin} totalPenalty={totalPenalty} />
+      {/* 탭 네비게이션 */}
+      <div className="flex bg-zinc-800/50 rounded-xl p-1 gap-1">
+        <button
+          onClick={() => setActiveTab("home")}
+          className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
+            activeTab === "home"
+              ? "bg-zinc-700 text-white"
+              : "text-zinc-400 hover:text-zinc-300"
+          }`}
+        >
+          🏠 홈
+        </button>
+        <button
+          onClick={() => setActiveTab("calendar")}
+          className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
+            activeTab === "calendar"
+              ? "bg-zinc-700 text-white"
+              : "text-zinc-400 hover:text-zinc-300"
+          }`}
+        >
+          📅 캘린더
+        </button>
+      </div>
 
-      {/* 출석 인증 (아직 안 했으면) */}
-      {!todayCheckin && (
-        <CheckinUpload userId={user.id} onCheckin={handleCheckin} />
+      {activeTab === "home" ? (
+        <>
+          {/* 오늘의 상태 */}
+          <StatusCard checkin={todayCheckin} totalPenalty={totalPenalty} />
+
+          {/* 출석 인증 or 면제권 (아직 안 했으면) */}
+          {!todayCheckin && (
+            <>
+              <CheckinUpload userId={user.id} onCheckin={handleCheckin} />
+              <ExemptionCard
+                userId={user.id}
+                hasCheckedInToday={false}
+                onExemptionUsed={handleExemptionUsed}
+              />
+            </>
+          )}
+
+          {/* 오늘의 인증 피드 (단톡방처럼) */}
+          <TodayFeed refreshKey={refreshKey} />
+
+          {/* 리더보드 */}
+          <Leaderboard refreshKey={refreshKey} />
+        </>
+      ) : (
+        <>
+          {/* 출석 캘린더 */}
+          <AttendanceCalendar userId={user.id} />
+
+          {/* 면제권 현황 */}
+          <ExemptionCard
+            userId={user.id}
+            hasCheckedInToday={!!todayCheckin}
+            onExemptionUsed={handleExemptionUsed}
+          />
+        </>
       )}
-
-      {/* 리더보드 */}
-      <Leaderboard refreshKey={refreshKey} />
     </main>
   );
 }

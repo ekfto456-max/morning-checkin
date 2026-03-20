@@ -17,10 +17,20 @@ export interface MockCheckin {
   penalty: number;
 }
 
+export interface MockExemption {
+  id: string;
+  user_id: string;
+  reason: string;
+  granted_at: string;
+  used_at: string | null;
+  used_for_date: string | null;
+}
+
 // 글로벌 인메모리 저장소
 const globalStore = globalThis as unknown as {
   __mock_users?: MockUser[];
   __mock_checkins?: MockCheckin[];
+  __mock_exemptions?: MockExemption[];
 };
 
 if (!globalStore.__mock_users) {
@@ -29,9 +39,13 @@ if (!globalStore.__mock_users) {
 if (!globalStore.__mock_checkins) {
   globalStore.__mock_checkins = [];
 }
+if (!globalStore.__mock_exemptions) {
+  globalStore.__mock_exemptions = [];
+}
 
 export const mockUsers = globalStore.__mock_users;
 export const mockCheckins = globalStore.__mock_checkins;
+export const mockExemptions = globalStore.__mock_exemptions;
 
 // Supabase가 플레이스홀더인지 확인
 export function isUsingMockMode(): boolean {

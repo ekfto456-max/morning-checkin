@@ -5,6 +5,8 @@
 CREATE TABLE IF NOT EXISTS users (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   name TEXT NOT NULL UNIQUE,
+  batch TEXT DEFAULT '',
+  purpose TEXT DEFAULT '',
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -18,27 +20,26 @@ CREATE TABLE IF NOT EXISTS checkins (
   penalty INTEGER NOT NULL DEFAULT 0
 );
 
--- 3. 인덱스 생성 (쿼리 성능 향상)
+-- 3. exemptions (면제권) 테이블 생성
+CREATE TABLE IF NOT EXISTS exemptions (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  reason TEXT DEFAULT '',
+  granted_at TIMESTAMPTZ DEFAULT NOW(),
+  used_at TIMESTAMPTZ,
+  used_for_date DATE
+);
+
+-- 4. 인덱스 생성
 CREATE INDEX IF NOT EXISTS idx_checkins_user_id ON checkins(user_id);
 CREATE INDEX IF NOT EXISTS idx_checkins_time ON checkins(checkin_time);
+CREATE INDEX IF NOT EXISTS idx_exemptions_user_id ON exemptions(user_id);
 
--- 4. Row Level Security 설정 (공개 접근 허용)
+-- 5. Row Level Security 설정 (공개 접근 허용)
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE checkins ENABLE ROW LEVEL SECURITY;
+ALTER TABLE exemptions ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Allow all on users" ON users FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all on checkins" ON checkins FOR ALL USING (true) WITH CHECK (true);
-
--- 5. Storage 버킷 설정
--- Supabase Dashboard > Storage > New Bucket 에서 수동 생성:
---   이름: checkin-images
---   Public: true (공개)
---
--- 버킷 생성 후 아래 정책을 Storage > Policies 에서 추가:
---   Policy name: Allow public uploads
---   Allowed operation: INSERT
---   Policy: true
---
---   Policy name: Allow public reads
---   Allowed operation: SELECT
---   Policy: true
+CREATE POLICY "Allow all on exemptions" ON exemptions FOR ALL USING (true) WITH CHECK (true);
