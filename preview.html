@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Morning Check-in Preview</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    .fade-in { animation: fadeIn 0.3s ease-in; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+  <!-- Screen 1: Login -->
+  <div id="screen-login" class="fade-in">
+    <div class="max-w-sm mx-auto mt-20 p-6 bg-white rounded-xl shadow-md">
+      <h1 class="text-2xl font-bold text-center mb-6">🌅 출석 체크</h1>
+      <div class="space-y-4">
+        <input
+          id="name-input"
+          type="text"
+          placeholder="이름을 입력하세요"
+          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg"
+        />
+        <button
+          id="login-btn"
+          onclick="handleLogin()"
+          class="w-full py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          시작하기
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Screen 2: Dashboard (before check-in) -->
+  <div id="screen-dashboard" class="hidden fade-in">
+    <main class="max-w-lg mx-auto px-4 py-6 space-y-6">
+      <!-- Header -->
+      <header class="flex items-center justify-between">
+        <div>
+          <h1 class="text-xl font-bold">🌅 출석 체크</h1>
+          <p class="text-sm text-gray-500">안녕하세요, <span id="user-name" class="font-medium"></span>님</p>
+        </div>
+        <button onclick="handleLogout()" class="text-sm text-gray-400 hover:text-gray-600">로그아웃</button>
+      </header>
+
+      <!-- Status Card (empty) -->
+      <div id="status-empty" class="bg-white rounded-xl shadow-md p-6 space-y-4">
+        <h2 class="text-lg font-semibold">📋 오늘의 출석</h2>
+        <p class="text-gray-400 text-center py-4">아직 출석하지 않았습니다</p>
+        <div class="border-t pt-4">
+          <div class="flex items-center justify-between">
+            <span class="text-gray-600 font-medium">누적 벌금</span>
+            <span id="total-penalty-empty" class="text-2xl font-bold text-red-600">0원</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Status Card (filled) - hidden initially -->
+      <div id="status-filled" class="bg-white rounded-xl shadow-md p-6 space-y-4 hidden">
+        <h2 class="text-lg font-semibold">📋 오늘의 출석</h2>
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-gray-600">상태</span>
+            <span id="checkin-status" class="px-3 py-1 rounded-full text-sm font-medium"></span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-gray-600">체크인 시간</span>
+            <span id="checkin-time" class="font-mono"></span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-gray-600">오늘 벌금</span>
+            <span id="checkin-penalty" class="font-bold text-lg"></span>
+          </div>
+        </div>
+        <div class="border-t pt-4">
+          <div class="flex items-center justify-between">
+            <span class="text-gray-600 font-medium">누적 벌금</span>
+            <span id="total-penalty-filled" class="text-2xl font-bold text-red-600"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Upload Section -->
+      <div id="upload-section" class="bg-white rounded-xl shadow-md p-6 space-y-4">
+        <h2 class="text-lg font-semibold">📸 출석 인증</h2>
+        <div class="space-y-3">
+          <input
+            id="file-input"
+            type="file"
+            accept="image/*"
+            onchange="handleFileChange(event)"
+            class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-blue-50 file:text-blue-700 file:font-medium hover:file:bg-blue-100"
+          />
+          <img id="preview-img" class="w-full max-h-48 object-cover rounded-lg hidden" alt="Preview" />
+          <button
+            id="upload-btn"
+            onclick="handleCheckin()"
+            disabled
+            class="w-full py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            출석하기
+          </button>
+        </div>
+      </div>
+
+      <!-- Leaderboard -->
+      <div class="bg-white rounded-xl shadow-md p-6">
+        <h2 class="text-lg font-semibold mb-4">🏆 리더보드</h2>
+        <div id="leaderboard" class="space-y-2"></div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Mock data
+    const mockUsers = [
+      { name: "김민수", totalPenalty: 0 },
+      { name: "이지은", totalPenalty: 2000 },
+      { name: "박서준", totalPenalty: 4000 },
+      { name: "최유리", totalPenalty: 7000 },
+      { name: "정태영", totalPenalty: 12000 },
+    ];
+
+    let currentUser = null;
+
+    function getMedal(i) {
+      if (i === 0) return "🥇";
+      if (i === 1) return "🥈";
+      if (i === 2) return "🥉";
+      return (i + 1) + ".";
+    }
+
+    function renderLeaderboard(entries) {
+      const el = document.getElementById("leaderboard");
+      el.innerHTML = entries
+        .sort((a, b) => a.totalPenalty - b.totalPenalty)
+        .map((e, i) => `
+          <div class="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-gray-50 ${e.name === currentUser ? 'bg-blue-50' : ''}">
+            <div class="flex items-center gap-3">
+              <span class="text-lg w-8">${getMedal(i)}</span>
+              <span class="font-medium">${e.name}</span>
+            </div>
+            <span class="font-mono font-bold ${e.totalPenalty === 0 ? 'text-green-600' : 'text-red-600'}">
+              ${e.totalPenalty.toLocaleString()}원
+            </span>
+          </div>
+        `).join("");
+    }
+
+    function calculatePenalty() {
+      const now = new Date();
+      const h = now.getHours();
+      const m = now.getMinutes();
+      const total = h * 60 + m;
+      if (total <= 603) return { status: "on_time", penalty: 0 };
+      if (total <= 615) return { status: "late", penalty: 2000 };
+      return { status: "late", penalty: 5000 };
+    }
+
+    function handleLogin() {
+      const name = document.getElementById("name-input").value.trim();
+      if (!name) return;
+
+      currentUser = name;
+      document.getElementById("user-name").textContent = name;
+      document.getElementById("screen-login").classList.add("hidden");
+      document.getElementById("screen-dashboard").classList.remove("hidden");
+
+      // Add user to leaderboard if not exists
+      if (!mockUsers.find(u => u.name === name)) {
+        mockUsers.push({ name, totalPenalty: 0 });
+      }
+      renderLeaderboard(mockUsers);
+    }
+
+    function handleLogout() {
+      currentUser = null;
+      document.getElementById("screen-login").classList.remove("hidden");
+      document.getElementById("screen-dashboard").classList.add("hidden");
+      document.getElementById("name-input").value = "";
+      // Reset state
+      document.getElementById("status-empty").classList.remove("hidden");
+      document.getElementById("status-filled").classList.add("hidden");
+      document.getElementById("upload-section").classList.remove("hidden");
+      document.getElementById("preview-img").classList.add("hidden");
+      document.getElementById("upload-btn").disabled = true;
+      document.getElementById("file-input").value = "";
+    }
+
+    function handleFileChange(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const img = document.getElementById("preview-img");
+          img.src = e.target.result;
+          img.classList.remove("hidden");
+          document.getElementById("upload-btn").disabled = false;
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function handleCheckin() {
+      const btn = document.getElementById("upload-btn");
+      btn.textContent = "업로드 중...";
+      btn.disabled = true;
+
+      setTimeout(() => {
+        const { status, penalty } = calculatePenalty();
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+
+        // Update status card
+        document.getElementById("status-empty").classList.add("hidden");
+        document.getElementById("status-filled").classList.remove("hidden");
+
+        const statusEl = document.getElementById("checkin-status");
+        if (status === "on_time") {
+          statusEl.textContent = "✅ 정시";
+          statusEl.className = "px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800";
+        } else {
+          statusEl.textContent = "⚠️ 지각";
+          statusEl.className = "px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800";
+        }
+
+        document.getElementById("checkin-time").textContent = timeStr;
+        document.getElementById("checkin-penalty").textContent = penalty.toLocaleString() + "원";
+
+        // Update total penalty
+        const userEntry = mockUsers.find(u => u.name === currentUser);
+        if (userEntry) userEntry.totalPenalty += penalty;
+        const totalPenalty = userEntry ? userEntry.totalPenalty : penalty;
+        document.getElementById("total-penalty-filled").textContent = totalPenalty.toLocaleString() + "원";
+
+        // Hide upload section
+        document.getElementById("upload-section").classList.add("hidden");
+
+        // Re-render leaderboard
+        renderLeaderboard(mockUsers);
+      }, 800);
+    }
+
+    // Enter key support
+    document.getElementById("name-input").addEventListener("keydown", function(e) {
+      if (e.key === "Enter") handleLogin();
+    });
+  </script>
+</body>
+</html>

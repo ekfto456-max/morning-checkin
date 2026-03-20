@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm:*)",
+      "Bash(npx:*)",
+      "Bash(next:*)",
+      "Bash(node:*)",
+      "Bash(curl:*)",
+      "Bash(cp:*)",
+      "Bash(mkdir:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(head:*)",
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(base64:*)",
+      "Bash(sleep:*)",
+      "Bash(timeout:*)",
+      "Bash(rm:*)",
+      "Bash(which:*)",
+      "Bash(powershell.exe:*)",
+      "Bash(wc:*)",
+      "Bash(export:*)",
+      "Bash(cd:*)",
+      "Write",
+      "Edit"
+    ]
+  }
+}

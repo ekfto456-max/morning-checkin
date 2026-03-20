@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>죽기스 - 출석체크</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f0f2f5;
+      min-height: 100vh;
+      color: #1a1a1a;
+    }
+    .hidden { display: none !important; }
+
+    /* ===== LOGIN SCREEN ===== */
+    .login-screen {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .login-card {
+      background: white;
+      border-radius: 20px;
+      padding: 40px 28px;
+      width: 100%;
+      max-width: 380px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      text-align: center;
+    }
+
+    /* 면제권 심벌 */
+    .mascot-card {
+      background: #fffde7;
+      border: 3px solid #333;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 24px;
+      position: relative;
+      box-shadow: 4px 4px 0 #ccc;
+    }
+    .mascot-card .cloud {
+      background: white;
+      border: 3px solid #80deea;
+      border-radius: 50px;
+      padding: 12px 20px;
+      display: inline-block;
+      position: relative;
+    }
+    .mascot-card .cloud-text {
+      font-size: 28px;
+      font-weight: 900;
+      color: #333;
+      letter-spacing: 2px;
+    }
+    .mascot-card .rainbow-left,
+    .mascot-card .rainbow-right {
+      position: absolute;
+      font-size: 24px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+    .mascot-card .rainbow-left { left: 8px; }
+    .mascot-card .rainbow-right { right: 8px; }
+    .mascot-card .sun { position: absolute; top: 4px; left: 8px; font-size: 14px; }
+    .mascot-card .star { position: absolute; top: 4px; right: 8px; font-size: 18px; }
+    .mascot-card .bottom-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-top: 8px;
+      padding: 0 4px;
+    }
+    .mascot-card .tree { font-size: 22px; }
+    .mascot-card .dog { font-size: 18px; }
+    .mascot-card .notice {
+      font-size: 11px;
+      color: #888;
+      text-align: right;
+    }
+
+    .app-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: #333;
+      margin-bottom: 4px;
+    }
+    .app-subtitle {
+      font-size: 13px;
+      color: #999;
+      margin-bottom: 24px;
+    }
+    .input-field {
+      width: 100%;
+      padding: 14px 16px;
+      border: 2px solid #e0e0e0;
+      border-radius: 12px;
+      font-size: 16px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .input-field:focus { border-color: #667eea; }
+    .btn-primary {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 12px;
+      transition: opacity 0.2s;
+    }
+    .btn-primary:hover { opacity: 0.9; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ===== DASHBOARD ===== */
+    .dashboard {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 16px;
+      padding-bottom: 40px;
+    }
+    .dash-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0;
+      margin-bottom: 16px;
+    }
+    .dash-header .logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .dash-header .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+    .dash-header .logo-text h1 {
+      font-size: 16px;
+      font-weight: 800;
+    }
+    .dash-header .logo-text p {
+      font-size: 11px;
+      color: #999;
+    }
+    .btn-logout {
+      background: none;
+      border: 1px solid #ddd;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      color: #999;
+      cursor: pointer;
+    }
+    .btn-logout:hover { background: #f5f5f5; }
+
+    /* Clock */
+    .clock-bar {
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      text-align: center;
+    }
+    .clock-time {
+      font-size: 48px;
+      font-weight: 800;
+      font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+      color: #333;
+      letter-spacing: 2px;
+    }
+    .clock-date {
+      font-size: 13px;
+      color: #999;
+      margin-top: 4px;
+    }
+    .clock-deadline {
+      display: inline-block;
+      margin-top: 10px;
+      padding: 4px 14px;
+      background: #fff3e0;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #e65100;
+    }
+
+    /* Cards */
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+    .card-title {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .status-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+    }
+    .status-row + .status-row {
+      border-top: 1px solid #f0f0f0;
+    }
+    .status-label { font-size: 14px; color: #888; }
+    .status-value { font-size: 14px; font-weight: 600; }
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .badge-green { background: #e8f5e9; color: #2e7d32; }
+    .badge-red { background: #ffebee; color: #c62828; }
+    .badge-gray { background: #f5f5f5; color: #999; }
+
+    .penalty-total {
+      text-align: center;
+      padding: 16px 0 4px;
+      border-top: 1px solid #f0f0f0;
+      margin-top: 8px;
+    }
+    .penalty-total .label { font-size: 13px; color: #888; }
+    .penalty-total .amount {
+      font-size: 32px;
+      font-weight: 800;
+      color: #c62828;
+    }
+    .penalty-total .amount.zero { color: #2e7d32; }
+
+    /* Camera / Upload */
+    .camera-section { text-align: center; }
+    .camera-buttons {
+      display: flex;
+      gap: 8px;
+    }
+    .btn-camera {
+      flex: 1;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .btn-camera.shoot {
+      background: #667eea;
+      color: white;
+    }
+    .btn-camera.shoot:hover { background: #5a6fd6; }
+    .btn-camera.gallery {
+      background: #f0f0f0;
+      color: #555;
+    }
+    .btn-camera.gallery:hover { background: #e0e0e0; }
+    .btn-checkin {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, #43a047, #2e7d32);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 12px;
+      transition: opacity 0.2s;
+    }
+    .btn-checkin:hover { opacity: 0.9; }
+    .btn-checkin:disabled { opacity: 0.5; cursor: not-allowed; }
+    .captured-img {
+      width: 100%;
+      max-height: 200px;
+      object-fit: cover;
+      border-radius: 12px;
+      margin-bottom: 12px;
+    }
+    .btn-retake {
+      background: none;
+      border: 1px solid #ddd;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      color: #888;
+      cursor: pointer;
+      margin-bottom: 8px;
+    }
+
+    /* Leaderboard */
+    .lb-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      border-radius: 10px;
+      margin-bottom: 4px;
+      transition: background 0.2s;
+    }
+    .lb-row:hover { background: #f9f9f9; }
+    .lb-row.me { background: #ede7f6; }
+    .lb-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .lb-rank {
+      width: 28px;
+      font-size: 16px;
+      text-align: center;
+    }
+    .lb-name { font-size: 14px; font-weight: 600; }
+    .lb-penalty {
+      font-size: 14px;
+      font-weight: 700;
+      font-family: "SF Mono", "Consolas", monospace;
+    }
+    .lb-penalty.good { color: #2e7d32; }
+    .lb-penalty.bad { color: #c62828; }
+
+    /* Animations */
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-in { animation: slideUp 0.3s ease-out; }
+
+    .file-hidden { display: none; }
+
+    /* Video container */
+    .video-container {
+      position: relative;
+      width: 100%;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 12px;
+      background: #111;
+    }
+    .video-container video {
+      width: 100%;
+      display: block;
+      border-radius: 12px;
+    }
+    .btn-shutter {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      border: 4px solid white;
+      background: rgba(255,255,255,0.3);
+      cursor: pointer;
+      position: absolute;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      transition: all 0.15s;
+    }
+    .btn-shutter:hover { background: rgba(255,255,255,0.5); }
+    .btn-shutter:active { transform: translateX(-50%) scale(0.9); }
+    .btn-flip {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(0,0,0,0.4);
+      color: white;
+      font-size: 18px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== SCREEN: LOGIN ===== -->
+  <div id="screen-login" class="login-screen animate-in">
+    <div class="login-card">
+      <!-- 면제권 심벌 (실제 이미지) -->
+      <img id="mascot-img" src="/public/mascot.jpg" alt="죽기스 면제권"
+        style="width:100%; border-radius:12px; margin-bottom:20px; box-shadow:4px 4px 0 #ccc; border:3px solid #333;" />
+
+      <h2 class="app-title">죽음의 기상스터디</h2>
+      <p class="app-subtitle">죽기스 출석 체크 시스템</p>
+
+      <input
+        id="name-input"
+        type="text"
+        placeholder="이름을 입력하세요"
+        class="input-field"
+        autocomplete="off"
+      />
+      <button id="login-btn" onclick="handleLogin()" class="btn-primary">
+        시작하기
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== SCREEN: DASHBOARD ===== -->
+  <div id="screen-dashboard" class="hidden">
+    <div class="dashboard animate-in">
+      <!-- Header -->
+      <div class="dash-header">
+        <div class="logo">
+          <div class="logo-icon">💀</div>
+          <div class="logo-text">
+            <h1>죽기스</h1>
+            <p>안녕, <span id="user-name"></span></p>
+          </div>
+        </div>
+        <button class="btn-logout" onclick="handleLogout()">로그아웃</button>
+      </div>
+
+      <!-- Live Clock -->
+      <div class="clock-bar">
+        <div class="clock-time" id="live-clock">--:--:--</div>
+        <div class="clock-date" id="live-date"></div>
+        <div class="clock-deadline">⏰ 마감: 오전 10:04</div>
+      </div>
+
+      <!-- Status Card: Empty -->
+      <div id="status-empty" class="card">
+        <div class="card-title">📋 오늘의 출석</div>
+        <div style="text-align:center; padding: 16px 0; color: #ccc;">
+          <div style="font-size: 40px; margin-bottom: 8px;">😴</div>
+          <div style="font-size: 14px;">아직 출석하지 않았습니다</div>
+        </div>
+        <div class="penalty-total">
+          <div class="label">누적 벌금</div>
+          <div class="amount zero" id="total-penalty-empty">0원</div>
+        </div>
+      </div>
+
+      <!-- Status Card: Filled -->
+      <div id="status-filled" class="card hidden">
+        <div class="card-title">📋 오늘의 출석</div>
+        <div class="status-row">
+          <span class="status-label">상태</span>
+          <span id="checkin-status" class="badge badge-gray"></span>
+        </div>
+        <div class="status-row">
+          <span class="status-label">체크인 시간</span>
+          <span id="checkin-time" class="status-value" style="font-family:monospace;"></span>
+        </div>
+        <div class="status-row">
+          <span class="status-label">오늘 벌금</span>
+          <span id="checkin-penalty" class="status-value"></span>
+        </div>
+        <div id="checkin-img-row" class="hidden" style="margin-top: 12px;">
+          <img id="checkin-img-result" class="captured-img" alt="인증 사진" />
+        </div>
+        <div class="penalty-total">
+          <div class="label">누적 벌금</div>
+          <div class="amount" id="total-penalty-filled">0원</div>
+        </div>
+      </div>
+
+      <!-- Camera / Upload Section -->
+      <div id="upload-section" class="card camera-section">
+        <div class="card-title">📸 출석 인증</div>
+
+        <div id="cam-choose">
+          <div class="camera-buttons">
+            <button class="btn-camera shoot" onclick="startCamera()">
+              📷 카메라 촬영
+            </button>
+            <button class="btn-camera gallery" onclick="openGallery()">
+              🖼️ 갤러리
+            </button>
+          </div>
+          <input id="file-input" type="file" accept="image/*" class="file-hidden" onchange="handleFileChange(event)" />
+        </div>
+
+        <div id="cam-live" class="hidden">
+          <div class="video-container">
+            <video id="camera-video" autoplay playsinline></video>
+            <button class="btn-shutter" onclick="capturePhoto()"></button>
+            <button class="btn-flip" onclick="flipCamera()">🔄</button>
+          </div>
+          <button class="btn-camera gallery" onclick="cancelCamera()" style="width:100%;">
+            ✕ 취소
+          </button>
+        </div>
+
+        <div id="cam-captured" class="hidden">
+          <img id="captured-preview" class="captured-img" alt="촬영된 사진" />
+          <button class="btn-retake" onclick="retakePhoto()">📷 다시 찍기</button>
+          <button class="btn-checkin" id="checkin-btn" onclick="handleCheckin()">
+            ✅ 출석하기
+          </button>
+        </div>
+      </div>
+
+      <!-- Leaderboard -->
+      <div class="card">
+        <div class="card-title">🏆 리더보드</div>
+        <div id="leaderboard"></div>
+      </div>
+
+      <div style="text-align: center; padding: 20px 0; opacity: 0.4;">
+        <div style="font-size: 11px;">💀 죽음의 기상스터디 💀</div>
+      </div>
+    </div>
+  </div>
+
+  <canvas id="capture-canvas" style="display:none;"></canvas>
+
+  <script>
+    let currentUser = null;
+    let capturedImageData = null;
+    let cameraStream = null;
+    let facingMode = "user";
+
+    const mockUsers = [
+      { name: "김민수", totalPenalty: 0 },
+      { name: "이지은", totalPenalty: 2000 },
+      { name: "박서준", totalPenalty: 4000 },
+      { name: "최유리", totalPenalty: 7000 },
+      { name: "정태영", totalPenalty: 12000 },
+    ];
+
+    // ===== LIVE CLOCK =====
+    function updateClock() {
+      const now = new Date();
+      const h = String(now.getHours()).padStart(2, "0");
+      const m = String(now.getMinutes()).padStart(2, "0");
+      const s = String(now.getSeconds()).padStart(2, "0");
+      document.getElementById("live-clock").textContent = h + ":" + m + ":" + s;
+
+      const days = ["일", "월", "화", "수", "목", "금", "토"];
+      const dateStr = now.getFullYear() + "년 " + (now.getMonth()+1) + "월 " + now.getDate() + "일 (" + days[now.getDay()] + ")";
+      document.getElementById("live-date").textContent = dateStr;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // ===== PENALTY =====
+    function calculatePenalty() {
+      const now = new Date();
+      const minutes = now.getHours() * 60 + now.getMinutes();
+      if (minutes < 604) return { status: "on_time", penalty: 0, label: "✅ 정시", cls: "badge-green" };
+      if (minutes <= 615) return { status: "late", penalty: 2000, label: "⚠️ 지각", cls: "badge-red" };
+      return { status: "late", penalty: 5000, label: "🚨 지각", cls: "badge-red" };
+    }
+
+    // ===== LOGIN =====
+    function handleLogin() {
+      const name = document.getElementById("name-input").value.trim();
+      if (!name) return;
+      currentUser = name;
+      document.getElementById("user-name").textContent = name;
+      document.getElementById("screen-login").classList.add("hidden");
+      document.getElementById("screen-dashboard").classList.remove("hidden");
+      if (!mockUsers.find(function(u){ return u.name === name; })) {
+        mockUsers.push({ name: name, totalPenalty: 0 });
+      }
+      renderLeaderboard();
+    }
+
+    function handleLogout() {
+      stopCamera();
+      currentUser = null;
+      capturedImageData = null;
+      document.getElementById("screen-login").classList.remove("hidden");
+      document.getElementById("screen-dashboard").classList.add("hidden");
+      document.getElementById("name-input").value = "";
+      document.getElementById("status-empty").classList.remove("hidden");
+      document.getElementById("status-filled").classList.add("hidden");
+      document.getElementById("upload-section").classList.remove("hidden");
+      showCamChoose();
+    }
+
+    document.getElementById("name-input").addEventListener("keydown", function(e) {
+      if (e.key === "Enter") handleLogin();
+    });
+
+    // ===== CAMERA =====
+    async function startCamera() {
+      try {
+        cameraStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: facingMode, width: { ideal: 1280 }, height: { ideal: 720 } },
+          audio: false
+        });
+        document.getElementById("camera-video").srcObject = cameraStream;
+        document.getElementById("cam-choose").classList.add("hidden");
+        document.getElementById("cam-live").classList.remove("hidden");
+        document.getElementById("cam-captured").classList.add("hidden");
+      } catch (err) {
+        alert("카메라에 접근할 수 없습니다. 갤러리에서 사진을 선택해주세요.");
+      }
+    }
+
+    function stopCamera() {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(function(t){ t.stop(); });
+        cameraStream = null;
+      }
+    }
+
+    async function flipCamera() {
+      stopCamera();
+      facingMode = facingMode === "user" ? "environment" : "user";
+      await startCamera();
+    }
+
+    function capturePhoto() {
+      var video = document.getElementById("camera-video");
+      var canvas = document.getElementById("capture-canvas");
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      var ctx = canvas.getContext("2d");
+      if (facingMode === "user") {
+        ctx.translate(canvas.width, 0);
+        ctx.scale(-1, 1);
+      }
+      ctx.drawImage(video, 0, 0);
+      capturedImageData = canvas.toDataURL("image/jpeg", 0.85);
+      document.getElementById("captured-preview").src = capturedImageData;
+      stopCamera();
+      document.getElementById("cam-live").classList.add("hidden");
+      document.getElementById("cam-captured").classList.remove("hidden");
+    }
+
+    function cancelCamera() {
+      stopCamera();
+      showCamChoose();
+    }
+
+    function retakePhoto() {
+      capturedImageData = null;
+      startCamera();
+    }
+
+    function showCamChoose() {
+      document.getElementById("cam-choose").classList.remove("hidden");
+      document.getElementById("cam-live").classList.add("hidden");
+      document.getElementById("cam-captured").classList.add("hidden");
+    }
+
+    // ===== GALLERY =====
+    function openGallery() {
+      document.getElementById("file-input").click();
+    }
+
+    function handleFileChange(event) {
+      var file = event.target.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        capturedImageData = e.target.result;
+        document.getElementById("captured-preview").src = capturedImageData;
+        document.getElementById("cam-choose").classList.add("hidden");
+        document.getElementById("cam-captured").classList.remove("hidden");
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // ===== CHECKIN =====
+    function handleCheckin() {
+      var btn = document.getElementById("checkin-btn");
+      btn.textContent = "⏳ 업로드 중...";
+      btn.disabled = true;
+
+      setTimeout(function() {
+        var result = calculatePenalty();
+        var now = new Date();
+        var timeStr = now.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+
+        document.getElementById("status-empty").classList.add("hidden");
+        document.getElementById("status-filled").classList.remove("hidden");
+
+        var statusEl = document.getElementById("checkin-status");
+        statusEl.textContent = result.label;
+        statusEl.className = "badge " + result.cls;
+
+        document.getElementById("checkin-time").textContent = timeStr;
+        var penaltyEl = document.getElementById("checkin-penalty");
+        penaltyEl.textContent = result.penalty === 0 ? "0원 🎉" : result.penalty.toLocaleString() + "원";
+        penaltyEl.style.color = result.penalty === 0 ? "#2e7d32" : "#c62828";
+
+        if (capturedImageData) {
+          document.getElementById("checkin-img-result").src = capturedImageData;
+          document.getElementById("checkin-img-row").classList.remove("hidden");
+        }
+
+        var userEntry = mockUsers.find(function(u){ return u.name === currentUser; });
+        if (userEntry) userEntry.totalPenalty += result.penalty;
+        var total = userEntry ? userEntry.totalPenalty : result.penalty;
+        var totalEl = document.getElementById("total-penalty-filled");
+        totalEl.textContent = total.toLocaleString() + "원";
+        totalEl.className = "amount" + (total === 0 ? " zero" : "");
+
+        document.getElementById("upload-section").classList.add("hidden");
+        renderLeaderboard();
+      }, 600);
+    }
+
+    // ===== LEADERBOARD =====
+    function getMedal(i) {
+      if (i === 0) return "🥇";
+      if (i === 1) return "🥈";
+      if (i === 2) return "🥉";
+      return (i + 1) + "";
+    }
+
+    function renderLeaderboard() {
+      var sorted = mockUsers.slice().sort(function(a,b){ return a.totalPenalty - b.totalPenalty; });
+      var el = document.getElementById("leaderboard");
+      el.innerHTML = sorted.map(function(u, i) {
+        return '<div class="lb-row ' + (u.name === currentUser ? 'me' : '') + '">' +
+          '<div class="lb-left">' +
+            '<span class="lb-rank">' + getMedal(i) + '</span>' +
+            '<span class="lb-name">' + u.name + '</span>' +
+          '</div>' +
+          '<span class="lb-penalty ' + (u.totalPenalty === 0 ? 'good' : 'bad') + '">' +
+            u.totalPenalty.toLocaleString() + '원' +
+          '</span>' +
+        '</div>';
+      }).join("");
+    }
+  </script>
+</body>
+</html>

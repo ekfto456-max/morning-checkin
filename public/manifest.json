@@ -1,0 +1,18 @@
+{
+  "name": "죽기스 - 죽음의 기상스터디",
+  "short_name": "죽기스",
+  "description": "죽음의 기상스터디 출석체크 & 벌금 추적",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#dc2626",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/mascot.jpg",
+      "sizes": "any",
+      "type": "image/jpeg",
+      "purpose": "any"
+    }
+  ]
+}

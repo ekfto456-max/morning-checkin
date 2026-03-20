@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "preview",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["/c/checkin/start.sh"],
+      "port": 3000,
+      "autoPort": false
+    }
+  ]
+}
