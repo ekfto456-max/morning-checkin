@@ -2,6 +2,26 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { isUsingMockMode, mockUsers, generateId } from "@/lib/mock-store";
 
+export async function GET(request: NextRequest) {
+  const userId = request.nextUrl.searchParams.get("user_id");
+  if (!userId) return NextResponse.json({ error: "user_id 필요" }, { status: 400 });
+
+  if (isUsingMockMode()) {
+    const user = mockUsers.find((u) => u.id === userId);
+    if (!user) return NextResponse.json({ error: "유저 없음" }, { status: 404 });
+    return NextResponse.json(user);
+  }
+
+  const { data, error } = await supabase
+    .from("users")
+    .select("id, name, batch, purpose, avatar_url")
+    .eq("id", userId)
+    .single();
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 404 });
+  return NextResponse.json(data);
+}
+
 export async function PATCH(request: NextRequest) {
   const { id, name, batch, purpose, avatar_url } = await request.json();
   if (!id) return NextResponse.json({ error: "id 필요" }, { status: 400 });

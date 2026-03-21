@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import UserProfileModal from "@/components/UserProfileModal";
 
 type FeedItem = {
   id: string;
@@ -240,6 +241,7 @@ export default function TodayFeed({
 }) {
   const [feed, setFeed] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [profileModal, setProfileModal] = useState<{ userId: string; userName: string } | null>(null);
 
   useEffect(() => {
     const fetchFeed = async () => {
@@ -300,12 +302,15 @@ export default function TodayFeed({
             <div key={item.id} className="bg-gray-50 rounded-xl p-3 border border-gray-100">
               {/* 헤더 */}
               <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
+                <button
+                  className="flex items-center gap-2 active:opacity-70 transition-opacity"
+                  onClick={() => setProfileModal({ userId: item.user_id, userName: item.user_name })}
+                >
                   <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold text-gray-600">
                     {item.type === "exemption" ? "🎫" : item.user_name.charAt(0)}
                   </div>
                   <span className="font-semibold text-gray-800">{item.user_name}</span>
-                </div>
+                </button>
                 <div className="text-right flex items-center gap-1.5">
                   <span className="text-xs text-gray-400">{formatTime(item.checkin_time)}</span>
                   {item.type === "checkin" && (
@@ -358,6 +363,15 @@ export default function TodayFeed({
             </div>
           ))}
         </div>
+      )}
+
+      {/* 유저 프로필 모달 */}
+      {profileModal && (
+        <UserProfileModal
+          userId={profileModal.userId}
+          userName={profileModal.userName}
+          onClose={() => setProfileModal(null)}
+        />
       )}
     </div>
   );
