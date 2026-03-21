@@ -485,15 +485,7 @@ export default function SealCard({ userId }: { userId: string }) {
                 ))}
               </div>
               <p className="text-xs text-zinc-600 text-center pt-1">물개 몸을 직접 탭해도 반응해요 👆</p>
-            </div>
-
-            {/* ❤️ HP */}
-            <div className="bg-zinc-800/60 border border-zinc-700 rounded-xl p-4 space-y-1.5">
-              <p className="text-sm font-semibold text-zinc-300 flex items-center gap-1.5"><span>❤️</span> 체력 (HP)</p>
-              <p className="text-xs text-zinc-400 leading-relaxed">
-                물개 체력은 매일 조금씩 줄어들어요. 출석하거나 먹이·놀이를 해주면 체력이 유지돼요.<br/>
-                체력이 낮아지면 물개가 슬퍼하고 눈물을 흘려요 😢
-              </p>
+              <p className="text-xs text-zinc-500 text-center">놀아주지 않으면 물개가 슬퍼해요 😢 자주 놀아줘야 해요!</p>
             </div>
 
             <button
