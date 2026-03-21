@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await supabase
     .from("comments")
-    .select("id, content, created_at, user_id, users(name)")
+    .select("id, content, created_at, user_id, users(name, avatar_url)")
     .eq("checkin_id", checkin_id)
     .order("created_at", { ascending: true });
 
@@ -24,6 +24,7 @@ export async function GET(request: NextRequest) {
     created_at: c.created_at,
     user_id: c.user_id,
     user_name: c.users?.name || "알 수 없음",
+    avatar_url: c.users?.avatar_url || null,
   }));
 
   return NextResponse.json(formatted);
@@ -51,5 +52,6 @@ export async function POST(request: NextRequest) {
     created_at: data.created_at,
     user_id: data.user_id,
     user_name: (data as any).users?.name || "알 수 없음",
+    avatar_url: (data as any).users?.avatar_url || null,
   });
 }

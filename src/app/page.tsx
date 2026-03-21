@@ -212,7 +212,7 @@ export default function Home() {
           )}
 
           {/* 오늘의 인증 피드 (단톡방처럼) */}
-          <TodayFeed refreshKey={refreshKey} currentUserId={user.id} currentUserName={user.name} />
+          <TodayFeed refreshKey={refreshKey} currentUserId={user.id} currentUserName={user.name} currentUserAvatarUrl={user.avatar_url} />
 
           {/* 리더보드 */}
           <Leaderboard refreshKey={refreshKey} />

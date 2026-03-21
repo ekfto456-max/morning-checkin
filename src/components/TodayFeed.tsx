@@ -7,6 +7,7 @@ type FeedItem = {
   id: string;
   user_id: string;
   user_name: string;
+  avatar_url?: string | null;
   checkin_time: string;
   image_url?: string;
   status?: string;
@@ -22,7 +23,20 @@ type Comment = {
   created_at: string;
   user_id: string;
   user_name: string;
+  avatar_url?: string | null;
 };
+
+function Avatar({ src, name, size = "md" }: { src?: string | null; name: string; size?: "sm" | "md" }) {
+  const sizeClass = size === "sm" ? "w-6 h-6 text-xs" : "w-8 h-8 text-sm";
+  if (src) {
+    return <img src={src} alt={name} className={`${sizeClass} rounded-full object-cover shrink-0`} />;
+  }
+  return (
+    <div className={`${sizeClass} rounded-full bg-gray-200 flex items-center justify-center font-semibold text-gray-600 shrink-0`}>
+      {name.charAt(0)}
+    </div>
+  );
+}
 
 const EMOJI_REACTIONS = ["👍", "❤️", "🔥", "😂"];
 const QUICK_COMMENTS = ["ㅋㅋㅋ", "대박", "화이팅!", "오늘도 최고!"];
@@ -179,8 +193,8 @@ function CommentSection({
             <div className="space-y-2">
               {comments.map((c) => (
                 <div key={c.id} className="flex gap-2 items-start">
-                  <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs shrink-0 mt-0.5 font-semibold text-gray-600">
-                    {c.user_name.charAt(0)}
+                  <div className="mt-0.5">
+                    <Avatar src={c.avatar_url} name={c.user_name} size="sm" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-baseline gap-1.5">
@@ -234,10 +248,12 @@ function CommentSection({
 function PostComposer({
   currentUserId,
   currentUserName,
+  currentUserAvatarUrl,
   onPosted,
 }: {
   currentUserId: string;
   currentUserName: string;
+  currentUserAvatarUrl?: string | null;
   onPosted: () => void;
 }) {
   const [text, setText] = useState("");
@@ -279,8 +295,8 @@ function PostComposer({
   return (
     <div className="bg-white border border-gray-100 rounded-xl p-3 space-y-2">
       <div className="flex gap-2 items-start">
-        <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold text-gray-600 shrink-0 mt-0.5">
-          {currentUserName.charAt(0)}
+        <div className="mt-0.5">
+          <Avatar src={currentUserAvatarUrl} name={currentUserName} />
         </div>
         <textarea
           value={text}
@@ -323,10 +339,12 @@ export default function TodayFeed({
   refreshKey,
   currentUserId,
   currentUserName,
+  currentUserAvatarUrl,
 }: {
   refreshKey: number;
   currentUserId?: string;
   currentUserName?: string;
+  currentUserAvatarUrl?: string | null;
 }) {
   const [feed, setFeed] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -386,6 +404,7 @@ export default function TodayFeed({
         <PostComposer
           currentUserId={currentUserId}
           currentUserName={currentUserName}
+          currentUserAvatarUrl={currentUserAvatarUrl}
           onPosted={() => setLocalRefresh((n) => n + 1)}
         />
       )}
@@ -405,9 +424,7 @@ export default function TodayFeed({
                   className="flex items-center gap-2 active:opacity-70 transition-opacity"
                   onClick={() => setProfileModal({ userId: item.user_id, userName: item.user_name })}
                 >
-                  <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold text-gray-600">
-                    {item.type === "exemption" ? "🎫" : item.user_name.charAt(0)}
-                  </div>
+                  <Avatar src={item.avatar_url} name={item.type === "exemption" ? "🎫" : item.user_name} />
                   <div className="flex flex-col items-start">
                     <span className="font-semibold text-gray-800 leading-tight">{item.user_name}</span>
                     {item.type === "post" && (

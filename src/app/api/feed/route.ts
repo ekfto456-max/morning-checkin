@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
   // Supabase 모드
   const { data: checkins } = await supabase
     .from("checkins")
-    .select("*, users(name)")
+    .select("*, users(name, avatar_url)")
     .gte("checkin_time", startOfDay.toISOString())
     .lt("checkin_time", endOfDay.toISOString())
     .order("checkin_time", { ascending: true });
@@ -59,12 +59,12 @@ export async function GET(request: NextRequest) {
 
   const { data: exemptions } = await supabase
     .from("exemptions")
-    .select("*, users(name)")
+    .select("*, users(name, avatar_url)")
     .eq("used_for_date", todayStr);
 
   const { data: posts } = await supabase
     .from("posts")
-    .select("*, users(name)")
+    .select("*, users(name, avatar_url)")
     .gte("created_at", startOfDay.toISOString())
     .lt("created_at", endOfDay.toISOString());
 
@@ -73,6 +73,7 @@ export async function GET(request: NextRequest) {
       id: c.id,
       user_id: c.user_id,
       user_name: (c.users as Record<string, string>)?.name || "알 수 없음",
+      avatar_url: (c.users as Record<string, string>)?.avatar_url || null,
       checkin_time: c.checkin_time as string,
       image_url: c.image_url,
       status: c.status,
@@ -83,6 +84,7 @@ export async function GET(request: NextRequest) {
       id: e.id,
       user_id: e.user_id,
       user_name: (e.users as Record<string, string>)?.name || "알 수 없음",
+      avatar_url: (e.users as Record<string, string>)?.avatar_url || null,
       checkin_time: (e.used_at || e.granted_at) as string,
       type: "exemption" as const,
       reason: e.reason,
@@ -91,6 +93,7 @@ export async function GET(request: NextRequest) {
       id: p.id,
       user_id: p.user_id,
       user_name: (p.users as Record<string, string>)?.name || "알 수 없음",
+      avatar_url: (p.users as Record<string, string>)?.avatar_url || null,
       checkin_time: p.created_at as string,
       content: p.content,
       image_url: p.image_url,
