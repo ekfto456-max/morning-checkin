@@ -138,8 +138,9 @@ export default function PenaltyFund({ userId, userName }: { userId: string; user
     finally { setSubmitting(false); }
   };
 
-  const fillPercent = data ? Math.min(100, (data.grandTotal / MAX_AMOUNT) * 100) : 0;
-  const paidPercent = data ? Math.min(100, (data.paidTotal / MAX_AMOUNT) * 100) : 0;
+  const dynamicMax = data ? Math.max(MAX_AMOUNT, data.grandTotal) : MAX_AMOUNT;
+  const fillPercent = data ? Math.min(100, (data.grandTotal / dynamicMax) * 100) : 0;
+  const paidPercent = data ? Math.min(100, (data.paidTotal / dynamicMax) * 100) : 0;
 
   const formatKRW = (n: number) => n.toLocaleString("ko-KR") + "원";
 
@@ -179,7 +180,6 @@ export default function PenaltyFund({ userId, userName }: { userId: string; user
         <h2 className="text-lg font-semibold flex items-center gap-2">
           <span>🐷</span>
           <span>죽기스 벌금통</span>
-          <span className="text-xs text-zinc-500 font-normal ml-auto">최대 {formatKRW(MAX_AMOUNT)}</span>
         </h2>
 
         {/* 돼지저금통 SVG */}
@@ -216,9 +216,6 @@ export default function PenaltyFund({ userId, userName }: { userId: string; user
                 background: "linear-gradient(90deg, #16a34a, #22c55e)",
               }}
             />
-          </div>
-          <div className="text-center text-xs text-zinc-600">
-            {Math.round(fillPercent)}% 채워짐
           </div>
         </div>
       </div>
