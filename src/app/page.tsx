@@ -119,6 +119,33 @@ export default function Home() {
 
   const clock = formatClock(currentTime);
 
+  // 다음 마감일 안내 (평일 10:03 기준, KST)
+  const getNextDeadlineLabel = () => {
+    const now = currentTime;
+    const day = now.getDay(); // 0=일, 1=월, 2=화, 3=수, 4=목, 5=금, 6=토
+    const isWeekend = day === 0 || day === 6;
+    const isPastDeadline = now.getHours() > 10 || (now.getHours() === 10 && now.getMinutes() >= 3);
+    const dayNames = ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"];
+
+    // 다음 평일 계산
+    const getNextWeekday = (fromDay: number, isPast: boolean) => {
+      let next = fromDay;
+      if (isPast) next = (next + 1) % 7;
+      // 주말이면 월요일까지 건너뜀
+      while (next === 0 || next === 6) next = (next + 1) % 7;
+      return next;
+    };
+
+    if (isWeekend) {
+      return "월요일 오전 10:03까지 출석하세요";
+    } else if (!isPastDeadline) {
+      return "오늘 오전 10:03까지 출석하세요";
+    } else {
+      const nextDay = getNextWeekday(day, true);
+      return `${dayNames[nextDay]} 오전 10:03까지 출석하세요`;
+    }
+  };
+
   return (
     <main className="max-w-lg mx-auto px-4 py-6 pb-24 space-y-5">
       {/* 헤더 */}
@@ -160,9 +187,7 @@ export default function Home() {
           <span className="text-3xl" style={{ opacity: 0.5 }}>{clock.s}</span>
         </div>
         <p className="text-sm text-white/70">
-          마감{" "}
-          <span className="text-white font-bold">오전 10:03</span>
-          {" "}까지 출석하세요
+          {getNextDeadlineLabel()}
         </p>
       </div>
 
