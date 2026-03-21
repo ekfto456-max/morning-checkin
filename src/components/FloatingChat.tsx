@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import UserProfileModal from "@/components/UserProfileModal";
 
 type Message = {
   id: string;
@@ -29,6 +30,7 @@ export default function FloatingChat({ userId, userName }: Props) {
   const [sending, setSending] = useState(false);
   const [lastSeenCount, setLastSeenCount] = useState(0);
   const [unread, setUnread] = useState(0);
+  const [profileModal, setProfileModal] = useState<{ userId: string; userName: string } | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -173,17 +175,23 @@ export default function FloatingChat({ userId, userName }: Props) {
                 className={`flex ${isMe ? "justify-end" : "justify-start"} gap-2`}
               >
                 {!isMe && (
-                  <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-bold text-gray-600 shrink-0 mt-1">
+                  <button
+                    onClick={() => setProfileModal({ userId: msg.user_id, userName: msg.user_name })}
+                    className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-bold text-gray-600 shrink-0 mt-1 active:opacity-70 transition-opacity"
+                  >
                     {msg.user_name.charAt(0)}
-                  </div>
+                  </button>
                 )}
                 <div
                   className={`flex flex-col ${isMe ? "items-end" : "items-start"} max-w-[75%]`}
                 >
                   {!isMe && (
-                    <span className="text-xs text-gray-500 mb-1 ml-1">
+                    <button
+                      onClick={() => setProfileModal({ userId: msg.user_id, userName: msg.user_name })}
+                      className="text-xs text-gray-500 mb-1 ml-1 hover:text-gray-700 active:opacity-70 transition-opacity"
+                    >
                       {msg.user_name}
-                    </span>
+                    </button>
                   )}
                   <div className="flex items-end gap-1">
                     {isMe && (
@@ -237,6 +245,13 @@ export default function FloatingChat({ userId, userName }: Props) {
           </button>
         </div>
       </div>
+      {profileModal && (
+        <UserProfileModal
+          userId={profileModal.userId}
+          userName={profileModal.userName}
+          onClose={() => setProfileModal(null)}
+        />
+      )}
     </>
   );
 }
