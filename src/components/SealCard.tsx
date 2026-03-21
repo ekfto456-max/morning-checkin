@@ -19,13 +19,14 @@ const LEVEL_NAMES: Record<number, string> = {
 };
 
 const HAPPY_MESSAGES = [
-  "오늘도 화이팅!",
+  "오늘도 화이팅! 🦭",
   "물고기 맛있다~",
   "다들 사랑해 🦭",
   "일찍 와줘서 고마워~",
   "오늘 하루도 즐겁다! 🐟",
   "헤헤 기분 좋다~",
   "같이 놀자! 🎾",
+  "출석 완료! 최고야! ✅",
 ];
 const NORMAL_MESSAGES = [
   "배고프다...",
@@ -41,6 +42,26 @@ const SAD_MESSAGES = [
   "누가 밥 좀...",
   "외로워... 😢",
 ];
+
+const LEVEL_MESSAGES: Record<number, string[]> = {
+  1: ["저 아직 아기예요... 빨리 키워줘요 🍼", "얼른 레벨업 하고 싶어요!"],
+  2: ["조금씩 크고 있어요! 🌱", "먹이 더 줘요~ 쑥쑥 클게요!"],
+  3: ["이제 제법 컸죠? 😊", "청소년 물개예요! 에너지 넘쳐요 💥"],
+  4: ["저 이제 어른이에요! 💪", "레벨 5까지 얼마 안 남았어요!"],
+  5: ["전설의 물개!! 저를 봐요 👑", "최고 레벨 달성!! 최강이에요 ✨"],
+};
+
+function getTimeBasedMessage(): string | null {
+  const hour = new Date().getHours();
+  const min = new Date().getMinutes();
+  if (hour >= 6 && hour < 9) return "이른 아침이에요! 출석 준비됐어요? ☀️";
+  if (hour === 9) return "슬슬 출석할 시간이에요! 🕙";
+  if (hour === 10 && min < 4) return "지금 출석하면 정시에요! 얼른! ⏰";
+  if (hour === 10 && min >= 4 && min < 16) return "지각이에요... 2,000원 😢";
+  if (hour === 10 && min >= 16) return "많이 늦었어요... 5,000원 😭";
+  if (hour >= 22 || hour < 6) return "오늘 하루 수고했어요! 잘 자요 🌙";
+  return null;
+}
 
 const PET_REACTIONS = [
   "으흐흐~ 간지러워!",
@@ -135,40 +156,47 @@ export default function SealCard({ userId }: { userId: string }) {
   const idleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const moveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const pickMessage = useCallback((sealData: SealData) => {
+    // 30% 확률로 시간 기반, 20% 확률로 레벨 기반, 나머지는 상태 기반
+    const timeMsg = getTimeBasedMessage();
+    const rand = Math.random();
+    if (timeMsg && rand < 0.3) return timeMsg;
+    const levelMsgs = LEVEL_MESSAGES[sealData.level];
+    if (levelMsgs && rand < 0.5) return getRandomItem(levelMsgs);
+    const status = getSealStatus(sealData.last_fed);
+    return getRandomItem(
+      status === "happy" ? HAPPY_MESSAGES :
+      status === "normal" ? NORMAL_MESSAGES : SAD_MESSAGES
+    );
+  }, []);
+
   const fetchSeal = useCallback(async () => {
     try {
       const res = await fetch("/api/seal");
       if (res.ok) {
         const data = await res.json();
         setSeal(data);
-        setMessage(getRandomItem(
-          getSealStatus(data.last_fed) === "happy" ? HAPPY_MESSAGES :
-          getSealStatus(data.last_fed) === "normal" ? NORMAL_MESSAGES : SAD_MESSAGES
-        ));
+        setMessage(pickMessage(data));
       }
     } catch {
       // 에러 무시
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [pickMessage]);
 
   useEffect(() => {
     fetchSeal();
   }, [fetchSeal]);
 
-  // 메시지 주기적 변경
+  // 메시지 주기적 변경 (8초마다)
   useEffect(() => {
     if (!seal) return;
     const interval = setInterval(() => {
-      const status = getSealStatus(seal.last_fed);
-      setMessage(getRandomItem(
-        status === "happy" ? HAPPY_MESSAGES :
-        status === "normal" ? NORMAL_MESSAGES : SAD_MESSAGES
-      ));
+      setMessage(pickMessage(seal));
     }, 8000);
     return () => clearInterval(interval);
-  }, [seal]);
+  }, [seal, pickMessage]);
 
   // Autonomous movement - randomly slide left/right
   useEffect(() => {
@@ -545,6 +573,12 @@ export default function SealCard({ userId }: { userId: string }) {
         </div>
       )}
 
+      {/* 말풍선 - 캐릭터 위 */}
+      <div className="speech-bubble-above">
+        <p className="text-sm text-zinc-200">{message}</p>
+        <div className="speech-tail" />
+      </div>
+
       {/* 물개 캐릭터 영역 */}
       <div className="seal-stage" onClick={handleSealTap}>
         {/* 먹이주기 물고기 애니메이션 */}
@@ -670,9 +704,16 @@ export default function SealCard({ userId }: { userId: string }) {
       </div>
 
       {/* EXP 바 */}
-      <div className="flex items-center gap-2">
-        <span className="text-sm w-6">⭐</span>
-        <div className="flex-1 bg-zinc-800 rounded-full h-4 overflow-hidden border border-zinc-700">
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between text-xs text-zinc-400">
+          <span>⭐ {LEVEL_NAMES[seal.level] || LEVEL_NAMES[1]}</span>
+          <span className="font-mono">
+            {seal.level >= 5
+              ? "MAX 🏆"
+              : `다음 레벨까지 ${Math.round(100 - expPercent)}%`}
+          </span>
+        </div>
+        <div className="relative bg-zinc-800 rounded-full h-4 overflow-hidden border border-zinc-700">
           <div
             className="h-full rounded-full transition-all duration-700 ease-out"
             style={{
@@ -680,18 +721,14 @@ export default function SealCard({ userId }: { userId: string }) {
               background: "linear-gradient(90deg, #eab308, #facc15)",
             }}
           />
+          <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-zinc-900/80">
+            {Math.round(expPercent)}%
+          </span>
         </div>
-        <span className="text-sm text-zinc-400 font-mono w-20 text-right">
-          {seal.exp.toFixed(1)}/{seal.level >= 5 ? "MAX" : levelInfo.needed + LEVEL_THRESHOLDS[seal.level - 1].exp}
-        </span>
-      </div>
-
-      {/* 말풍선 */}
-      <div className="bg-zinc-800/60 border border-zinc-700 rounded-xl p-3 text-center relative">
-        <div className="speech-triangle"></div>
-        <p className="text-sm text-zinc-300 italic">
-          &quot;{message}&quot;
-        </p>
+        <div className="flex justify-between text-[10px] text-zinc-600 font-mono">
+          <span>EXP {seal.exp.toFixed(1)}</span>
+          <span>{seal.level >= 5 ? "전설 달성!" : `목표 ${levelInfo.needed + LEVEL_THRESHOLDS[seal.level - 1].exp} EXP`}</span>
+        </div>
       </div>
 
       {/* 인터랙션 버튼들 */}
@@ -738,6 +775,40 @@ export default function SealCard({ userId }: { userId: string }) {
 }
 
 const sealStyles = `
+  /* 말풍선 (캐릭터 위) */
+  .speech-bubble-above {
+    position: relative;
+    background: rgba(39, 39, 42, 0.85);
+    border: 1px solid rgba(113, 113, 122, 0.4);
+    border-radius: 16px;
+    padding: 10px 14px;
+    text-align: center;
+    margin-bottom: 4px;
+    backdrop-filter: blur(4px);
+  }
+  .speech-tail {
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-top: 8px solid rgba(113, 113, 122, 0.4);
+  }
+  .speech-tail::after {
+    content: '';
+    position: absolute;
+    top: -9px;
+    left: -7px;
+    width: 0;
+    height: 0;
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+    border-top: 7px solid rgba(39, 39, 42, 0.85);
+  }
+
   /* 인터랙션 버튼 */
   .interaction-btn {
     display: flex;

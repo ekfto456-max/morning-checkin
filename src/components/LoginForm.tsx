@@ -14,6 +14,8 @@ export default function LoginForm({
   const [purpose, setPurpose] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showInstallGuide, setShowInstallGuide] = useState(false);
+  const [installTab, setInstallTab] = useState<"iphone" | "galaxy">("iphone");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -127,6 +129,93 @@ export default function LoginForm({
         <p className="text-center text-xs text-zinc-600">
           최초 1회만 등록하면 다음부터 자동 로그인됩니다
         </p>
+
+        {/* 앱 설치 가이드 토글 */}
+        <div className="border border-zinc-700 rounded-2xl overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setShowInstallGuide(!showInstallGuide)}
+            className="w-full flex items-center justify-between px-4 py-3 text-sm text-zinc-400 hover:bg-zinc-800/50 transition-colors"
+          >
+            <span className="flex items-center gap-2">
+              <span>📲</span>
+              <span>홈 화면에 앱으로 설치하기</span>
+            </span>
+            <span className="text-zinc-600">{showInstallGuide ? "▲" : "▼"}</span>
+          </button>
+
+          {showInstallGuide && (
+            <div className="border-t border-zinc-700 px-4 py-4 space-y-3">
+              {/* 탭 */}
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setInstallTab("iphone")}
+                  className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${
+                    installTab === "iphone"
+                      ? "bg-zinc-100 text-zinc-900"
+                      : "bg-zinc-800 text-zinc-400"
+                  }`}
+                >
+                  🍎 아이폰
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setInstallTab("galaxy")}
+                  className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${
+                    installTab === "galaxy"
+                      ? "bg-zinc-100 text-zinc-900"
+                      : "bg-zinc-800 text-zinc-400"
+                  }`}
+                >
+                  🤖 갤럭시
+                </button>
+              </div>
+
+              {installTab === "iphone" && (
+                <div className="space-y-2">
+                  <p className="text-xs text-yellow-400 font-medium">⚠️ Safari로 열어야 해요!</p>
+                  {[
+                    { step: "1", text: "Safari로 이 페이지 접속" },
+                    { step: "2", text: "하단 가운데 공유 버튼 탭 (□↑)" },
+                    { step: "3", text: "\"홈 화면에 추가\" 선택" },
+                    { step: "4", text: "오른쪽 위 \"추가\" 탭" },
+                  ].map(({ step, text }) => (
+                    <div key={step} className="flex items-center gap-3">
+                      <span className="w-6 h-6 rounded-full bg-red-600 text-white text-xs flex items-center justify-center flex-shrink-0 font-bold">
+                        {step}
+                      </span>
+                      <span className="text-sm text-zinc-300">{text}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {installTab === "galaxy" && (
+                <div className="space-y-2">
+                  <p className="text-xs text-blue-400 font-medium">Chrome 브라우저로 접속하세요</p>
+                  {[
+                    { step: "1", text: "Chrome으로 이 페이지 접속" },
+                    { step: "2", text: "우측 상단 ⋮ (점 세 개) 탭" },
+                    { step: "3", text: "\"홈 화면에 추가\" 또는 \"앱 설치\" 선택" },
+                    { step: "4", text: "\"추가\" 확인" },
+                  ].map(({ step, text }) => (
+                    <div key={step} className="flex items-center gap-3">
+                      <span className="w-6 h-6 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center flex-shrink-0 font-bold">
+                        {step}
+                      </span>
+                      <span className="text-sm text-zinc-300">{text}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <p className="text-xs text-zinc-600 text-center pt-1">
+                설치 후에는 앱처럼 전체화면으로 실행돼요
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
