@@ -117,6 +117,9 @@ export default function SealCard({ userId }: { userId: string }) {
   const [showBall, setShowBall] = useState(false);
   const [showTrick, setShowTrick] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
+  const [expPopups, setExpPopups] = useState<{ id: number; amount: number }[]>([]);
+  const [levelUpEffect, setLevelUpEffect] = useState(false);
+  const expPopupCounter = useRef(0);
 
   // Autonomous behavior states
   const [positionX, setPositionX] = useState(0);
@@ -294,16 +297,57 @@ export default function SealCard({ userId }: { userId: string }) {
 
       if (res.ok) {
         const data = await res.json();
+        const prevLevel = seal?.level ?? 1;
         setSeal(data);
         setFishCount((c) => c + 1);
         setShowSparkle(true);
         setMessage("물고기 맛있다~ 고마워! 🐟");
+        showExpPopup(0.1);
+        if (data.level > prevLevel) {
+          setLevelUpEffect(true);
+          setMessage(`🎉 레벨 업! Lv.${data.level} 됐어!`);
+          setTimeout(() => setLevelUpEffect(false), 2000);
+        }
         setTimeout(() => setShowSparkle(false), 2000);
       }
     } catch {
       // 에러 무시
     } finally {
       setFeeding(false);
+    }
+  };
+
+  // 공통: EXP 팝업 띄우기
+  const showExpPopup = (amount: number) => {
+    const id = expPopupCounter.current++;
+    setExpPopups((prev) => [...prev, { id, amount }]);
+    setTimeout(() => {
+      setExpPopups((prev) => prev.filter((p) => p.id !== id));
+    }, 1500);
+  };
+
+  // 공통: API로 EXP 적립
+  const addExpToSeal = async (amount: number) => {
+    try {
+      const res = await fetch("/api/seal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "feed", user_id: userId }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const prevLevel = seal?.level ?? 1;
+        setSeal(data);
+        showExpPopup(amount);
+        // 레벨업 효과
+        if (data.level > prevLevel) {
+          setLevelUpEffect(true);
+          setMessage(`🎉 레벨 업! Lv.${data.level} 됐어!`);
+          setTimeout(() => setLevelUpEffect(false), 2000);
+        }
+      }
+    } catch {
+      // 에러 무시
     }
   };
 
@@ -314,6 +358,7 @@ export default function SealCard({ userId }: { userId: string }) {
     setShowHearts(true);
     setCurrentAnimation("seal-pet");
     setMessage(getRandomItem(PET_REACTIONS));
+    addExpToSeal(0.1);
     setTimeout(() => {
       setShowHearts(false);
       setCurrentAnimation("");
@@ -327,6 +372,7 @@ export default function SealCard({ userId }: { userId: string }) {
     setShowBall(true);
     setCurrentAnimation("seal-play");
     setMessage(getRandomItem(PLAY_REACTIONS));
+    addExpToSeal(0.1);
     setTimeout(() => {
       setShowBall(false);
       setCurrentAnimation("");
@@ -340,6 +386,7 @@ export default function SealCard({ userId }: { userId: string }) {
     setShowTrick(true);
     setCurrentAnimation("seal-trick");
     setMessage(getRandomItem(TRICK_REACTIONS));
+    addExpToSeal(0.1);
     setTimeout(() => {
       setShowTrick(false);
       setCurrentAnimation("");
@@ -541,6 +588,20 @@ export default function SealCard({ userId }: { userId: string }) {
                 animationDelay: `${i * 0.15}s`,
               }}>⭐</div>
             ))}
+          </div>
+        )}
+
+        {/* EXP 팝업 */}
+        {expPopups.map((popup) => (
+          <div key={popup.id} className="exp-popup">
+            +{popup.amount} EXP ⭐
+          </div>
+        ))}
+
+        {/* 레벨업 이펙트 */}
+        {levelUpEffect && (
+          <div className="level-up-effect">
+            ✨ LEVEL UP! ✨
           </div>
         )}
 
@@ -1400,6 +1461,58 @@ const sealStyles = `
     60% { top: 15%; left: 50%; transform: scale(0.7); }
     80% { top: 45%; left: 35%; transform: scale(0.9); }
     100% { top: 60%; left: 50%; transform: scale(0) rotate(720deg); opacity: 0; }
+  }
+
+  /* EXP 팝업 */
+  .exp-popup {
+    position: absolute;
+    top: 20%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #eab308, #facc15);
+    color: #1a1200;
+    font-weight: 800;
+    font-size: 15px;
+    padding: 5px 14px;
+    border-radius: 20px;
+    pointer-events: none;
+    z-index: 30;
+    white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(234,179,8,0.5);
+    animation: exp-float-up 1.5s ease-out forwards;
+  }
+  @keyframes exp-float-up {
+    0%   { transform: translateX(-50%) translateY(0) scale(0.5); opacity: 0; }
+    15%  { transform: translateX(-50%) translateY(-5px) scale(1.15); opacity: 1; }
+    30%  { transform: translateX(-50%) translateY(-10px) scale(1); opacity: 1; }
+    80%  { transform: translateX(-50%) translateY(-30px) scale(1); opacity: 1; }
+    100% { transform: translateX(-50%) translateY(-50px) scale(0.8); opacity: 0; }
+  }
+
+  /* 레벨업 이펙트 */
+  .level-up-effect {
+    position: absolute;
+    top: 10%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #f59e0b, #fbbf24, #fde68a);
+    color: #1a1200;
+    font-weight: 900;
+    font-size: 18px;
+    padding: 8px 20px;
+    border-radius: 24px;
+    pointer-events: none;
+    z-index: 40;
+    white-space: nowrap;
+    box-shadow: 0 0 30px rgba(251,191,36,0.8), 0 4px 15px rgba(0,0,0,0.3);
+    animation: level-up-pop 2s ease-out forwards;
+  }
+  @keyframes level-up-pop {
+    0%   { transform: translateX(-50%) scale(0); opacity: 0; }
+    20%  { transform: translateX(-50%) scale(1.3); opacity: 1; }
+    35%  { transform: translateX(-50%) scale(1); opacity: 1; }
+    80%  { transform: translateX(-50%) scale(1); opacity: 1; }
+    100% { transform: translateX(-50%) scale(0.8) translateY(-20px); opacity: 0; }
   }
 
   /* 말풍선 삼각형 */
