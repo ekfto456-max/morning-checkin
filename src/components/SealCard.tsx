@@ -242,7 +242,7 @@ function getLevelInfo(level: number, exp: number) {
 
 type IdleBehavior = "scratch" | "yawn" | "stretch" | "wiggle" | "look-around" | "sneeze" | "roll-over" | "shake-water" | null;
 
-export default function SealCard({ userId }: { userId: string }) {
+export default function SealCard({ userId, customDeadlineTime }: { userId: string; customDeadlineTime?: string | null }) {
   const [seal, setSeal] = useState<SealData | null>(null);
   const [loading, setLoading] = useState(true);
   const [feeding, setFeeding] = useState(false);
@@ -618,7 +618,7 @@ export default function SealCard({ userId }: { userId: string }) {
               </p>
               <div className="space-y-1.5">
                 {[
-                  { icon: "✅", label: "정시 출석 (10:03 이전)", exp: "+2 EXP", color: "text-green-400" },
+                  { icon: "✅", label: `정시 출석 (${customDeadlineTime || "10:03"} 이전)`, exp: "+2 EXP", color: "text-green-400" },
                   { icon: "🌅", label: "새벽 기상 보너스 (오전 7시 이전)", exp: "+4 EXP", color: "text-blue-400" },
                   { icon: "⚡", label: "전원 정시 출석 (팀 보너스)", exp: "+6 EXP", color: "text-yellow-400" },
                   { icon: "🔥", label: "연속 출석 5일 이상", exp: "+1 EXP", color: "text-orange-400" },

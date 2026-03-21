@@ -15,7 +15,7 @@ import FloatingChat from "@/components/FloatingChat";
 import SealFeed from "@/components/SealFeed";
 import ProfileCard from "@/components/ProfileCard";
 
-type User = { id: string; name: string; batch?: string; purpose?: string; avatar_url?: string };
+type User = { id: string; name: string; batch?: string; purpose?: string; avatar_url?: string; custom_deadline_time?: string | null };
 type Checkin = {
   id: string;
   status: string;
@@ -119,30 +119,34 @@ export default function Home() {
 
   const clock = formatClock(currentTime);
 
-  // 다음 마감일 안내 (평일 10:03 기준, KST)
+  // 다음 마감일 안내 (개인 마감 시간 기준, KST)
   const getNextDeadlineLabel = () => {
     const now = currentTime;
-    const day = now.getDay(); // 0=일, 1=월, 2=화, 3=수, 4=목, 5=금, 6=토
+    const day = now.getDay();
     const isWeekend = day === 0 || day === 6;
-    const isPastDeadline = now.getHours() > 10 || (now.getHours() === 10 && now.getMinutes() >= 3);
     const dayNames = ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"];
 
-    // 다음 평일 계산
-    const getNextWeekday = (fromDay: number, isPast: boolean) => {
-      let next = fromDay;
-      if (isPast) next = (next + 1) % 7;
-      // 주말이면 월요일까지 건너뜀
+    const deadlineStr = user?.custom_deadline_time || "10:03";
+    const [dlH, dlM] = deadlineStr.split(":").map(Number);
+    const ampm = dlH < 12 ? "오전" : "오후";
+    const h12 = dlH === 0 ? 12 : dlH > 12 ? dlH - 12 : dlH;
+    const timeLabel = `${ampm} ${h12}:${String(dlM).padStart(2, "0")}`;
+
+    const isPastDeadline = now.getHours() > dlH || (now.getHours() === dlH && now.getMinutes() >= dlM);
+
+    const getNextWeekday = (fromDay: number) => {
+      let next = (fromDay + 1) % 7;
       while (next === 0 || next === 6) next = (next + 1) % 7;
       return next;
     };
 
     if (isWeekend) {
-      return "월요일 오전 10:03까지 출석하세요";
+      return `월요일 ${timeLabel}까지 출석하세요`;
     } else if (!isPastDeadline) {
-      return "오늘 오전 10:03까지 출석하세요";
+      return `오늘 ${timeLabel}까지 출석하세요`;
     } else {
-      const nextDay = getNextWeekday(day, true);
-      return `${dayNames[nextDay]} 오전 10:03까지 출석하세요`;
+      const nextDay = getNextWeekday(day);
+      return `${dayNames[nextDay]} ${timeLabel}까지 출석하세요`;
     }
   };
 
@@ -248,7 +252,7 @@ export default function Home() {
       ) : activeTab === "seal" ? (
         <>
           {/* 물개 카드 */}
-          <SealCard userId={user.id} />
+          <SealCard userId={user.id} customDeadlineTime={user.custom_deadline_time} />
         </>
       ) : activeTab === "fund" ? (
         <PenaltyFund userId={user.id} userName={user.name} />
