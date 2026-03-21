@@ -3,11 +3,11 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 
 const LEVEL_THRESHOLDS = [
-  { level: 1, exp: 0, next: 100 },
-  { level: 2, exp: 100, next: 300 },
-  { level: 3, exp: 300, next: 600 },
-  { level: 4, exp: 600, next: 1000 },
-  { level: 5, exp: 1000, next: Infinity },
+  { level: 1, exp: 0, next: 200 },
+  { level: 2, exp: 200, next: 600 },
+  { level: 3, exp: 600, next: 1200 },
+  { level: 4, exp: 1200, next: 1800 },
+  { level: 5, exp: 1800, next: Infinity },
 ];
 
 const LEVEL_NAMES: Record<number, string> = {
@@ -641,11 +641,11 @@ export default function SealCard({ userId }: { userId: string }) {
               </p>
               <div className="space-y-1.5">
                 {[
-                  { level: 1, name: "아기 물개 🥚", range: "0 ~ 99 EXP" },
-                  { level: 2, name: "꼬마 물개 🧒", range: "100 ~ 299 EXP" },
-                  { level: 3, name: "청소년 물개 🦭", range: "300 ~ 599 EXP" },
-                  { level: 4, name: "어른 물개 💪", range: "600 ~ 999 EXP" },
-                  { level: 5, name: "전설의 물개 👑", range: "1000 EXP~" },
+                  { level: 1, name: "아기 물개 🥚", range: "0 ~ 199 EXP" },
+                  { level: 2, name: "꼬마 물개 🧒", range: "200 ~ 599 EXP" },
+                  { level: 3, name: "청소년 물개 🦭", range: "600 ~ 1199 EXP" },
+                  { level: 4, name: "어른 물개 💪", range: "1200 ~ 1799 EXP" },
+                  { level: 5, name: "전설의 물개 👑", range: "1800 EXP~" },
                 ].map((s) => (
                   <div key={s.level} className={`flex items-center justify-between rounded-xl px-3 py-2.5 ${seal?.level === s.level ? "bg-yellow-500/10 border border-yellow-500/30" : "bg-zinc-800/40"}`}>
                     <span className="text-sm text-zinc-200 flex items-center gap-2">

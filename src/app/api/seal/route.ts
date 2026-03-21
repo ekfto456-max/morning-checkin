@@ -8,13 +8,13 @@ import {
   generateId,
 } from "@/lib/mock-store";
 
-// 레벨 경험치 기준
+// 레벨 경험치 기준 (9명 기준, 3개월 프로젝트 밸런스)
 const LEVEL_THRESHOLDS = [
   { level: 1, exp: 0 },
-  { level: 2, exp: 100 },
-  { level: 3, exp: 300 },
-  { level: 4, exp: 600 },
-  { level: 5, exp: 1000 },
+  { level: 2, exp: 200 },
+  { level: 3, exp: 600 },
+  { level: 4, exp: 1200 },
+  { level: 5, exp: 1800 },
 ];
 
 function calculateLevel(exp: number): number {
