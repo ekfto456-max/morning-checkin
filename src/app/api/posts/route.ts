@@ -97,14 +97,12 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: "id, user_id 필요" }, { status: 400 });
   }
 
-  const { error, count } = await supabase
+  const { error } = await supabase
     .from("posts")
-    .delete({ count: "exact" })
-    .eq("id", postId)
-    .eq("user_id", userId);
+    .delete()
+    .eq("id", postId);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  if (count === 0) return NextResponse.json({ error: "삭제할 게시글 없음 (권한 또는 ID 불일치)" }, { status: 404 });
 
   return NextResponse.json({ success: true });
 }
