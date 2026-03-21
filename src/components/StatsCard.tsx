@@ -155,10 +155,10 @@ export default function StatsCard({ userId }: { userId: string }) {
         )}
 
         {/* 잠긴 뱃지 힌트 */}
-        {stats.badges.length > 0 && stats.badges.length < 6 && (
+        {stats.badges.length > 0 && stats.badges.length < 10 && (
           <div className="mt-3 pt-3 border-t border-gray-100">
             <p className="text-xs text-gray-400 text-center">
-              🔒 {6 - stats.badges.length}개의 뱃지를 더 획득할 수 있어요
+              🔒 {10 - stats.badges.length}개의 뱃지를 더 획득할 수 있어요
             </p>
           </div>
         )}
