@@ -9,6 +9,28 @@ export async function GET() {
   const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
 
   if (isUsingMockMode()) {
+    // Mock: 이번 주 면제권 전체 자동 지급
+    const nowM = new Date();
+    const dowM = nowM.getDay();
+    const offM = dowM === 0 ? -6 : 1 - dowM;
+    const mondayM = new Date(nowM.getFullYear(), nowM.getMonth(), nowM.getDate() + offM);
+    const mondayMStr = mondayM.toISOString().split("T")[0];
+    for (const user of mockUsers) {
+      const already = mockExemptions.some(
+        (e) => e.user_id === user.id && e.granted_at.split("T")[0] >= mondayMStr
+      );
+      if (!already) {
+        mockExemptions.push({
+          id: Math.random().toString(36).slice(2),
+          user_id: user.id,
+          reason: `${nowM.getMonth() + 1}월 ${Math.ceil(nowM.getDate() / 7)}주차 면제권`,
+          granted_at: nowM.toISOString(),
+          used_at: null,
+          used_for_date: null,
+        });
+      }
+    }
+
     const result = mockUsers.map((user) => {
       // 오늘 체크인
       const todayCheckin = mockCheckins.find((c) => {
@@ -70,6 +92,35 @@ export async function GET() {
   if (usersError) {
     return NextResponse.json({ error: usersError.message }, { status: 500 });
   }
+
+  // ── 주간 면제권 자동 지급 (이번 주 월요일 기준, 전체 유저 대상) ──
+  const now = new Date();
+  const dayOfWeek = now.getDay(); // 0=일, 1=월, ...
+  const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+  const thisMonday = new Date(now.getFullYear(), now.getMonth(), now.getDate() + mondayOffset);
+  const thisMondayStr = thisMonday.toISOString().split("T")[0];
+
+  // 이번 주에 이미 지급된 면제권: user_id 목록 가져오기
+  const { data: alreadyGranted } = await supabase
+    .from("exemptions")
+    .select("user_id")
+    .gte("granted_at", `${thisMondayStr}T00:00:00.000Z`);
+
+  const alreadyGrantedIds = new Set((alreadyGranted || []).map((e) => e.user_id));
+
+  // 아직 지급 안 된 유저에게 지급
+  const toGrant = (users || []).filter((u) => !alreadyGrantedIds.has(u.id));
+  if (toGrant.length > 0) {
+    const weekLabel = `${now.getMonth() + 1}월 ${Math.ceil(now.getDate() / 7)}주차 면제권`;
+    await supabase.from("exemptions").insert(
+      toGrant.map((u) => ({
+        user_id: u.id,
+        reason: weekLabel,
+        granted_at: now.toISOString(),
+      }))
+    );
+  }
+  // ────────────────────────────────────────────────────────────────
 
   // 오늘 체크인
   const { data: checkins, error: checkinsError } = await supabase
