@@ -295,16 +295,6 @@ export default function PenaltyFund({ userId, userName }: { userId: string; user
               />
             </div>
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">메모 (선택)</label>
-              <input
-                type="text"
-                value={payNote}
-                onChange={(e) => setPayNote(e.target.value)}
-                placeholder="예: 3/20 지각분"
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-amber-400"
-              />
-            </div>
-            <div>
               <label className="text-xs text-gray-500 mb-1 block">입금 증빙 사진 (선택)</label>
               <input ref={fileRef} type="file" accept="image/*" onChange={handleProofImage} className="hidden" />
               {payProof ? (
