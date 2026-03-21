@@ -117,12 +117,25 @@ export default function FloatingChat({ userId, userName }: Props) {
         )}
       </button>
 
-      {/* Slide-up Chat Panel */}
+      {/* 배경 오버레이 */}
+      {open && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50"
+          onClick={() => setOpen(false)}
+        />
+      )}
+
+      {/* Slide-up Chat Panel - 하프 시트 스타일 */}
       <div
-        className={`fixed inset-0 z-50 flex flex-col transition-transform duration-300 ${
+        className={`fixed left-0 right-0 bottom-0 z-50 flex flex-col transition-transform duration-300 ${
           open ? "translate-y-0" : "translate-y-full"
         }`}
-        style={{ background: "#18181b" }}
+        style={{
+          background: "#18181b",
+          height: "75dvh",
+          borderRadius: "20px 20px 0 0",
+          boxShadow: "0 -4px 30px rgba(0,0,0,0.5)",
+        }}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800 bg-zinc-900">
