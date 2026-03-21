@@ -347,13 +347,13 @@ export default function TodayFeed({
                 </div>
               )}
 
-              {/* 이모지 반응 (체크인만) */}
-              {item.type === "checkin" && currentUserId && (
+              {/* 이모지 반응 */}
+              {currentUserId && (
                 <ReactionBar checkinId={item.id} currentUserId={currentUserId} />
               )}
 
               {/* 댓글 */}
-              {item.type === "checkin" && currentUserId && currentUserName && (
+              {currentUserId && currentUserName && (
                 <CommentSection
                   checkinId={item.id}
                   currentUserId={currentUserId}
