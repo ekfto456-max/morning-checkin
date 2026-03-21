@@ -1,37 +1,53 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
-import { calculatePenalty } from "@/lib/penalty";
+import { calculatePenalty, getKSTDayRange } from "@/lib/penalty";
 import { isUsingMockMode, mockCheckins, generateId, getMockSeal, updateMockSeal } from "@/lib/mock-store";
 
 // 출석 시 물개 EXP 지급
-async function addSealExp(status: string, checkinHour: number) {
+async function addSealExp(status: string, checkinHour: number, userId: string) {
   let amount = 0;
-  let reason = "";
 
   if (status === "on_time") {
-    amount = 10;
-    reason = "정시 출석";
-    if (checkinHour < 7) {
-      amount = 20;
-      reason = "새벽 기상 보너스!";
-    }
+    amount = checkinHour < 7 ? 20 : 10; // 새벽 기상 +20, 정시 +10
+  } else {
+    amount = -10; // 지각 -10 EXP
   }
-  // 지각은 EXP 0
-
-  if (amount <= 0) return;
 
   if (isUsingMockMode()) {
     const seal = getMockSeal();
-    updateMockSeal({ exp: seal.exp + amount });
+    updateMockSeal({ exp: Math.max(0, seal.exp + amount) });
     return;
   }
 
-  // Supabase: 물개 EXP 증가
+  // 연속 출석 5일 이상이면 추가 +5 EXP (정시 출석일 때만)
+  if (status === "on_time") {
+    const { getKSTDayRange } = await import("@/lib/penalty");
+    let streak = 0;
+    for (let i = 1; i <= 5; i++) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const start = new Date(d); start.setHours(0, 0, 0, 0);
+      const end = new Date(d); end.setHours(23, 59, 59, 999);
+      const { data } = await supabase
+        .from("checkins")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("status", "on_time")
+        .gte("checkin_time", start.toISOString())
+        .lte("checkin_time", end.toISOString())
+        .single();
+      if (data) streak++;
+      else break;
+    }
+    if (streak >= 5) amount += 5;
+  }
+
+  // Supabase: 물개 EXP 업데이트
   const { data: seal } = await supabase.from("seal").select("*").single();
   if (seal) {
     await supabase
       .from("seal")
-      .update({ exp: seal.exp + amount })
+      .update({ exp: Math.max(0, seal.exp + amount) })
       .eq("id", seal.id);
   }
 }
@@ -48,17 +64,8 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const today = new Date();
-  const startOfDay = new Date(
-    today.getFullYear(),
-    today.getMonth(),
-    today.getDate()
-  );
-  const endOfDay = new Date(
-    today.getFullYear(),
-    today.getMonth(),
-    today.getDate() + 1
-  );
+  // KST 기준 오늘 범위
+  const { startOfDay, endOfDay } = getKSTDayRange();
 
   // Mock 모드
   if (isUsingMockMode()) {
@@ -93,7 +100,7 @@ export async function POST(request: NextRequest) {
     mockCheckins.push(newCheckin);
 
     // 물개 EXP 지급
-    await addSealExp(status, now.getHours());
+    await addSealExp(status, now.getHours(), userId);
 
     return NextResponse.json(newCheckin);
   }
@@ -156,7 +163,7 @@ export async function POST(request: NextRequest) {
   }
 
   // 물개 EXP 지급
-  await addSealExp(status, now.getHours());
+  await addSealExp(status, now.getHours(), userId);
 
   return NextResponse.json(data);
 }
@@ -171,17 +178,8 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const today = new Date();
-  const startOfDay = new Date(
-    today.getFullYear(),
-    today.getMonth(),
-    today.getDate()
-  );
-  const endOfDay = new Date(
-    today.getFullYear(),
-    today.getMonth(),
-    today.getDate() + 1
-  );
+  // KST 기준 오늘 범위
+  const { startOfDay, endOfDay } = getKSTDayRange();
 
   // Mock 모드
   if (isUsingMockMode()) {

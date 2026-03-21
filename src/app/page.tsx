@@ -9,6 +9,8 @@ import ExemptionCard from "@/components/ExemptionCard";
 import AttendanceCalendar from "@/components/AttendanceCalendar";
 import TodayFeed from "@/components/TodayFeed";
 import SealCard from "@/components/SealCard";
+import MemberBoard from "@/components/MemberBoard";
+import PenaltyFund from "@/components/PenaltyFund";
 
 type User = { id: string; name: string; batch?: string; purpose?: string };
 type Checkin = {
@@ -26,7 +28,7 @@ export default function Home() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [loading, setLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [activeTab, setActiveTab] = useState<"home" | "seal" | "calendar">("home");
+  const [activeTab, setActiveTab] = useState<"home" | "seal" | "calendar" | "members" | "fund">("home");
 
   // 실시간 시계
   useEffect(() => {
@@ -155,37 +157,27 @@ export default function Home() {
       </div>
 
       {/* 탭 네비게이션 */}
-      <div className="flex bg-zinc-800/50 rounded-xl p-1 gap-1">
-        <button
-          onClick={() => setActiveTab("home")}
-          className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
-            activeTab === "home"
-              ? "bg-zinc-700 text-white"
-              : "text-zinc-400 hover:text-zinc-300"
-          }`}
-        >
-          🏠 홈
-        </button>
-        <button
-          onClick={() => setActiveTab("seal")}
-          className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
-            activeTab === "seal"
-              ? "bg-zinc-700 text-white"
-              : "text-zinc-400 hover:text-zinc-300"
-          }`}
-        >
-          🦭 물개
-        </button>
-        <button
-          onClick={() => setActiveTab("calendar")}
-          className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
-            activeTab === "calendar"
-              ? "bg-zinc-700 text-white"
-              : "text-zinc-400 hover:text-zinc-300"
-          }`}
-        >
-          📅 캘린더
-        </button>
+      <div className="grid grid-cols-5 bg-zinc-800/50 rounded-xl p-1 gap-1">
+        {[
+          { id: "home", label: "🏠", sub: "홈" },
+          { id: "seal", label: "🦭", sub: "물개" },
+          { id: "fund", label: "🐷", sub: "벌금통" },
+          { id: "calendar", label: "📅", sub: "캘린더" },
+          { id: "members", label: "👥", sub: "현황" },
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id as typeof activeTab)}
+            className={`flex flex-col items-center py-2 rounded-lg text-xs font-medium transition-colors gap-0.5 ${
+              activeTab === tab.id
+                ? "bg-zinc-700 text-white"
+                : "text-zinc-400 hover:text-zinc-300"
+            }`}
+          >
+            <span className="text-base">{tab.label}</span>
+            <span>{tab.sub}</span>
+          </button>
+        ))}
       </div>
 
       {activeTab === "home" ? (
@@ -216,6 +208,10 @@ export default function Home() {
           {/* 물개 카드 */}
           <SealCard userId={user.id} />
         </>
+      ) : activeTab === "fund" ? (
+        <PenaltyFund userId={user.id} userName={user.name} />
+      ) : activeTab === "members" ? (
+        <MemberBoard refreshKey={refreshKey} />
       ) : (
         <>
           {/* 출석 캘린더 */}

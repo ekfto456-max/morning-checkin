@@ -2,11 +2,10 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "preview",
+      "name": "Next.js Dev Server",
       "runtimeExecutable": "bash",
-      "runtimeArgs": ["/c/checkin/start.sh"],
-      "port": 3000,
-      "autoPort": false
+      "runtimeArgs": ["/c/checkin/start-죽기스.sh"],
+      "port": 3000
     }
   ]
 }

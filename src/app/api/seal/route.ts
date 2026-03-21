@@ -122,7 +122,7 @@ async function handleFeed(body: { user_id?: string }) {
     );
   }
 
-  // Mock 모드 (무제한 먹이)
+  // Mock 모드 (놀기 = +0.1 EXP)
   if (isUsingMockMode()) {
     mockSealFeeds.push({
       id: generateId(),
@@ -131,8 +131,9 @@ async function handleFeed(body: { user_id?: string }) {
     });
 
     const seal = getMockSeal();
-    const newHp = Math.min(100, seal.hp + 3);
-    const updated = updateMockSeal({ hp: newHp, last_fed: new Date().toISOString() });
+    const newExp = Math.round((seal.exp + 0.1) * 10) / 10;
+    const newLevel = calculateLevel(newExp);
+    const updated = updateMockSeal({ exp: newExp, level: newLevel, last_fed: new Date().toISOString() });
 
     return NextResponse.json({
       ...updated,
@@ -141,7 +142,7 @@ async function handleFeed(body: { user_id?: string }) {
     });
   }
 
-  // Supabase 모드 (무제한 먹이)
+  // Supabase 모드 (놀기 = +0.1 EXP)
   await supabase
     .from("seal_feeds")
     .insert({
@@ -161,10 +162,11 @@ async function handleFeed(body: { user_id?: string }) {
     );
   }
 
-  const newHp = Math.min(100, seal.hp + 3);
+  const newExp = Math.round((seal.exp + 0.1) * 10) / 10;
+  const newLevel = calculateLevel(newExp);
   const { data: updated, error: updateError } = await supabase
     .from("seal")
-    .update({ hp: newHp, last_fed: new Date().toISOString() })
+    .update({ exp: newExp, last_fed: new Date().toISOString() })
     .eq("id", seal.id)
     .select()
     .single();
@@ -175,7 +177,7 @@ async function handleFeed(body: { user_id?: string }) {
 
   return NextResponse.json({
     ...updated,
-    level: calculateLevel(updated.exp),
+    level: newLevel,
     fed: true,
   });
 }
