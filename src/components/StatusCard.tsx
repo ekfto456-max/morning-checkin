@@ -81,7 +81,7 @@ export default function StatusCard({
       <div className="border-t border-zinc-800 pt-4">
         <div className="flex items-center justify-between">
           <span className="text-zinc-400 font-medium">
-            {"\uB204\uC801 \uBC8C\uAE08"}
+            나의 누적 벌금
           </span>
           <span
             className={`text-2xl font-bold ${

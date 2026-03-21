@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from "react";
 const MAX_AMOUNT = 100000; // 최대 10만원 기준
 const ACCOUNT_NUMBER = "93800201061114";
 const ACCOUNT_BANK = "국민은행";
-const ACCOUNT_HOLDER = "재우";
+const ACCOUNT_HOLDER = "김재우";
 
 interface Payment {
   id: string;
