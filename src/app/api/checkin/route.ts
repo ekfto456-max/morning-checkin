@@ -219,8 +219,16 @@ export async function POST(request: NextRequest) {
     .from("checkin-images")
     .getPublicUrl(fileName);
 
+  // 유저 정보 조회 (이름 + 커스텀 마감시간)
+  const { data: userData } = await supabase
+    .from("users")
+    .select("name, custom_deadline_time")
+    .eq("id", userId)
+    .single();
+  const userName = userData?.name ?? "멤버";
+
   const now = new Date();
-  const { status, penalty } = calculatePenalty(now);
+  const { status, penalty } = calculatePenalty(now, userData?.custom_deadline_time);
 
   const { data, error } = await supabase
     .from("checkins")
@@ -240,14 +248,6 @@ export async function POST(request: NextRequest) {
 
   // 물개 EXP 지급
   await addSealExp(status, now.getHours(), userId);
-
-  // 유저 이름 조회
-  const { data: userData } = await supabase
-    .from("users")
-    .select("name")
-    .eq("id", userId)
-    .single();
-  const userName = userData?.name ?? "멤버";
 
   // 출석 seal_log 삽입
   const logInfo = getCheckinMessage(userName, status, now.getHours(), penalty);

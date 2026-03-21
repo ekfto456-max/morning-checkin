@@ -5,7 +5,17 @@
  * - 10:04 ~ 10:15 (10:15:59까지) → 지각 (벌금 2,000원)
  * - 10:16 이후 → 지각 (벌금 5,000원)
  */
-export function calculatePenalty(checkinTime: Date): {
+// "HH:MM" 문자열을 분으로 변환
+export function parseDeadlineMinutes(timeStr?: string | null): number {
+  if (!timeStr) return 10 * 60 + 3; // 기본 10:03
+  const [h, m] = timeStr.split(":").map(Number);
+  return h * 60 + (m || 0);
+}
+
+export function calculatePenalty(
+  checkinTime: Date,
+  customDeadlineTime?: string | null // "HH:MM" 형식, null이면 기본 10:03
+): {
   status: "on_time" | "late";
   penalty: number;
 } {
@@ -14,9 +24,8 @@ export function calculatePenalty(checkinTime: Date): {
   const utcMinutes = checkinTime.getUTCHours() * 60 + checkinTime.getUTCMinutes();
   const kstMinutes = (utcMinutes + KST_OFFSET) % (24 * 60);
 
-  // 10:04 = 604분. 603분(10:03)까지는 정시
-  const onTimeLimit = 10 * 60 + 3; // 10:03 (before 10:04)
-  const lateLimit = 10 * 60 + 15;  // 10:15
+  const onTimeLimit = parseDeadlineMinutes(customDeadlineTime); // 커스텀 or 기본 10:03
+  const lateLimit = onTimeLimit + 12; // 마감 후 12분까지 2,000원
 
   if (kstMinutes <= onTimeLimit) {
     return { status: "on_time", penalty: 0 };
