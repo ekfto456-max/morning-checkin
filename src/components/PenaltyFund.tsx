@@ -184,7 +184,7 @@ export default function PenaltyFund({ userId, userName }: { userId: string; user
 
         {/* 돼지저금통 SVG */}
         <div className="piggy-wrapper" onClick={triggerCoinRain}>
-          <PiggyBankSVG fillPercent={fillPercent} paidPercent={paidPercent} total={data?.grandTotal || 0} />
+          <PiggyBankSVG total={data?.grandTotal || 0} />
         </div>
 
         {/* 금액 표시 */}
@@ -410,50 +410,46 @@ export default function PenaltyFund({ userId, userName }: { userId: string; user
   );
 }
 
-function PiggyBankSVG({ fillPercent, paidPercent, total }: { fillPercent: number; paidPercent: number; total: number }) {
-  // 오징어게임 스타일 황금 돼지 저금통
-  const fillHeight = (fillPercent / 100) * 160;
-  const paidHeight = (paidPercent / 100) * 160;
-  const fillY = 200 - fillHeight;
-  const paidY = 200 - paidHeight;
+function PiggyBankSVG({ total }: { total: number }) {
+  // 금액에 따라 돈 이모지 개수 결정 (2000원마다 1개, 최대 9개)
+  const emojiCount = total === 0 ? 0 : Math.min(9, Math.max(1, Math.ceil(total / 2000)));
+
+  // 돼지 배 안 이모지 위치 (몸통 ellipse: cx=110 cy=160 rx=75 ry=70 기준)
+  const moneySlots = [
+    { x: 110, y: 172, e: "💰", delay: 0.0 },
+    { x: 83,  y: 185, e: "💵", delay: 0.4 },
+    { x: 137, y: 185, e: "💵", delay: 0.7 },
+    { x: 69,  y: 163, e: "💰", delay: 0.2 },
+    { x: 151, y: 163, e: "💰", delay: 0.5 },
+    { x: 95,  y: 202, e: "💵", delay: 0.1 },
+    { x: 125, y: 202, e: "💵", delay: 0.6 },
+    { x: 110, y: 148, e: "💰", delay: 0.3 },
+    { x: 110, y: 215, e: "💵", delay: 0.8 },
+  ];
 
   return (
     <div className="relative flex flex-col items-center">
-      <svg width="220" height="240" viewBox="0 0 220 240" className="drop-shadow-xl">
+      <svg width="300" height="310" viewBox="0 0 220 240" className="drop-shadow-xl">
         <defs>
-          {/* 금색 그라데이션 */}
           <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#fef08a" />
             <stop offset="40%" stopColor="#eab308" />
             <stop offset="100%" stopColor="#a16207" />
           </linearGradient>
-          {/* 빨간 (미납) 그라데이션 */}
-          <linearGradient id="redGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#f87171" stopOpacity="0.9" />
-            <stop offset="100%" stopColor="#dc2626" stopOpacity="0.95" />
-          </linearGradient>
-          {/* 초록 (납부) 그라데이션 */}
-          <linearGradient id="greenGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#4ade80" stopOpacity="0.9" />
-            <stop offset="100%" stopColor="#16a34a" stopOpacity="0.95" />
-          </linearGradient>
-          {/* 유리 반사 */}
           <linearGradient id="glassGrad" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="white" stopOpacity="0.15" />
             <stop offset="50%" stopColor="white" stopOpacity="0.05" />
             <stop offset="100%" stopColor="white" stopOpacity="0" />
           </linearGradient>
-          {/* 클리핑 마스크 - 돼지 모양 */}
-          <clipPath id="piggyClip">
-            {/* 몸통 */}
-            <ellipse cx="110" cy="160" rx="75" ry="70" />
+          <clipPath id="piggyBodyClip">
+            <ellipse cx="110" cy="160" rx="73" ry="68" />
           </clipPath>
         </defs>
 
-        {/* === 돼지 그림자 === */}
+        {/* 그림자 */}
         <ellipse cx="110" cy="232" rx="70" ry="8" fill="rgba(0,0,0,0.3)" />
 
-        {/* === 다리 4개 === */}
+        {/* 다리 4개 */}
         {[70, 90, 120, 140].map((x, i) => (
           <g key={i}>
             <rect x={x} y="216" width="14" height="16" rx="7" fill="url(#goldGrad)" />
@@ -461,140 +457,86 @@ function PiggyBankSVG({ fillPercent, paidPercent, total }: { fillPercent: number
           </g>
         ))}
 
-        {/* === 꼬리 === */}
+        {/* 꼬리 */}
         <path d="M 185 160 Q 205 145 195 130 Q 185 115 200 105" fill="none" stroke="url(#goldGrad)" strokeWidth="4" strokeLinecap="round" />
 
-        {/* === 몸통 배경 === */}
+        {/* 몸통 */}
         <ellipse cx="110" cy="160" rx="75" ry="70" fill="#1c1c1c" stroke="url(#goldGrad)" strokeWidth="3" />
 
-        {/* === 채워진 돈 (미납 - 빨강) === */}
-        {fillPercent > 0 && (
-          <rect
-            x="35"
-            y={fillY}
-            width="150"
-            height={fillHeight}
-            fill="url(#redGrad)"
-            clipPath="url(#piggyClip)"
+        {/* 💰 돈 이모지들 (금액만큼 쌓임) */}
+        {moneySlots.slice(0, emojiCount).map((slot, i) => (
+          <text
+            key={i}
+            x={slot.x}
+            y={slot.y}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fontSize="18"
+            clipPath="url(#piggyBodyClip)"
           >
-            <animate
-              attributeName="y"
-              from="200"
-              to={fillY}
-              dur="1.2s"
-              fill="freeze"
+            {slot.e}
+            <animateTransform
+              attributeName="transform"
+              type="translate"
+              values="0,0; 0,-3; 0,0"
+              dur="2s"
+              begin={`${slot.delay}s`}
+              repeatCount="indefinite"
               calcMode="spline"
-              keySplines="0.25 0.1 0.25 1"
+              keySplines="0.45 0 0.55 1; 0.45 0 0.55 1"
             />
-            <animate
-              attributeName="height"
-              from="0"
-              to={fillHeight}
-              dur="1.2s"
-              fill="freeze"
-              calcMode="spline"
-              keySplines="0.25 0.1 0.25 1"
-            />
-          </rect>
-        )}
+          </text>
+        ))}
 
-        {/* === 납부 완료 분 (초록) === */}
-        {paidPercent > 0 && (
-          <rect
-            x="35"
-            y={paidY}
-            width="150"
-            height={paidHeight}
-            fill="url(#greenGrad)"
-            clipPath="url(#piggyClip)"
-          >
-            <animate
-              attributeName="y"
-              from="200"
-              to={paidY}
-              dur="1.5s"
-              fill="freeze"
-              calcMode="spline"
-              keySplines="0.25 0.1 0.25 1"
-            />
-            <animate
-              attributeName="height"
-              from="0"
-              to={paidHeight}
-              dur="1.5s"
-              fill="freeze"
-              calcMode="spline"
-              keySplines="0.25 0.1 0.25 1"
-            />
-          </rect>
-        )}
-
-        {/* === 금액 텍스트 (돼지 몸통 안) === */}
-        {total > 0 && (
-          <>
-            <text x="110" y="158" textAnchor="middle" fontSize="13" fontWeight="bold" fill="rgba(255,255,255,0.9)" fontFamily="monospace">
-              {total.toLocaleString("ko-KR")}
-            </text>
-            <text x="110" y="174" textAnchor="middle" fontSize="11" fill="rgba(255,255,255,0.6)" fontFamily="system-ui">
-              원
-            </text>
-          </>
-        )}
+        {/* 비어있을 때 */}
         {total === 0 && (
           <text x="110" y="168" textAnchor="middle" fontSize="12" fill="rgba(255,255,255,0.3)" fontFamily="system-ui">
             비어있어요
           </text>
         )}
 
-        {/* === 몸통 윤곽 (금 테두리) === */}
+        {/* 몸통 윤곽 (금 테두리) */}
         <ellipse cx="110" cy="160" rx="75" ry="70" fill="none" stroke="url(#goldGrad)" strokeWidth="2.5" />
 
-        {/* === 유리 반사 효과 === */}
+        {/* 유리 반사 */}
         <ellipse cx="110" cy="160" rx="75" ry="70" fill="url(#glassGrad)" />
         <ellipse cx="85" cy="135" rx="25" ry="18" fill="rgba(255,255,255,0.06)" />
 
-        {/* === 머리 === */}
+        {/* 머리 */}
         <circle cx="110" cy="90" r="38" fill="#1c1c1c" stroke="url(#goldGrad)" strokeWidth="2.5" />
         <circle cx="110" cy="90" r="38" fill="url(#glassGrad)" />
 
-        {/* === 귀 === */}
+        {/* 귀 */}
         <ellipse cx="78" cy="62" rx="13" ry="16" fill="#1c1c1c" stroke="url(#goldGrad)" strokeWidth="2" transform="rotate(-15 78 62)" />
         <ellipse cx="78" cy="62" rx="8" ry="10" fill="#2d1a1a" transform="rotate(-15 78 62)" />
         <ellipse cx="142" cy="62" rx="13" ry="16" fill="#1c1c1c" stroke="url(#goldGrad)" strokeWidth="2" transform="rotate(15 142 62)" />
         <ellipse cx="142" cy="62" rx="8" ry="10" fill="#2d1a1a" transform="rotate(15 142 62)" />
 
-        {/* === 눈 === */}
+        {/* 눈 */}
         <circle cx="95" cy="85" r="7" fill="#111" stroke="url(#goldGrad)" strokeWidth="1.5" />
         <circle cx="125" cy="85" r="7" fill="#111" stroke="url(#goldGrad)" strokeWidth="1.5" />
         <circle cx="97" cy="83" r="2.5" fill="white" />
         <circle cx="127" cy="83" r="2.5" fill="white" />
 
-        {/* === 코 === */}
+        {/* 코 */}
         <ellipse cx="110" cy="103" rx="14" ry="10" fill="#1a0a0a" stroke="url(#goldGrad)" strokeWidth="1.5" />
         <circle cx="104" cy="103" r="4" fill="#2d1212" />
         <circle cx="116" cy="103" r="4" fill="#2d1212" />
         <circle cx="103" cy="102" r="1.5" fill="rgba(255,255,255,0.3)" />
         <circle cx="115" cy="102" r="1.5" fill="rgba(255,255,255,0.3)" />
 
-        {/* === 동전 투입구 === */}
+        {/* 동전 투입구 */}
         <rect x="92" y="55" width="36" height="6" rx="3" fill="#1c1c1c" stroke="url(#goldGrad)" strokeWidth="1.5" />
 
-        {/* === 몸통-머리 연결 === */}
+        {/* 몸통-머리 연결 */}
         <ellipse cx="110" cy="122" rx="30" ry="12" fill="#1c1c1c" stroke="none" />
         <ellipse cx="110" cy="90" rx="38" ry="38" fill="none" stroke="url(#goldGrad)" strokeWidth="2.5" />
       </svg>
 
-      {/* 범례 */}
-      <div className="flex gap-4 mt-1">
-        <div className="flex items-center gap-1.5 text-xs text-zinc-400">
-          <div className="w-3 h-3 rounded-sm bg-red-500"></div>
-          <span>미납</span>
-        </div>
-        <div className="flex items-center gap-1.5 text-xs text-zinc-400">
-          <div className="w-3 h-3 rounded-sm bg-green-500"></div>
-          <span>납부완료</span>
-        </div>
-      </div>
+      {/* 금액에 따른 설명 */}
+      <p className="text-xs text-zinc-600 -mt-2">
+        {total === 0 ? "아직 벌금이 없어요 🎉" : `💰 ${emojiCount}개 쌓임 (${(2000).toLocaleString()}원당 1개)`}
+      </p>
     </div>
   );
 }
