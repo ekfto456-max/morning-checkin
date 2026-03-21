@@ -27,6 +27,16 @@ const HAPPY_MESSAGES = [
   "헤헤 기분 좋다~",
   "같이 놀자! 🎾",
   "출석 완료! 최고야! ✅",
+  "오늘 기분 최상이에요 ☀️",
+  "여러분 덕에 행복해요 💕",
+  "일찍 일어난 사람 최고! 👍",
+  "물고기 5개 먹었어요 배불러 🐟🐟🐟",
+  "오늘 출석률 보고 감동받았어 😭",
+  "뭉치는 언제나 여러분 편이에요!",
+  "이렇게 귀여운 물개 본 적 있어요? 🦭",
+  "앞발로 하이파이브 🤚",
+  "오늘도 같이 있어줘서 고마워요!",
+  "기상 성공! 오늘 하루 잘 됩니다 💫",
 ];
 const NORMAL_MESSAGES = [
   "배고프다...",
@@ -34,6 +44,17 @@ const NORMAL_MESSAGES = [
   "물고기 주세요~",
   "같이 놀아줘~",
   "심심해... 🦭",
+  "물개도 월요일은 싫어요",
+  "오늘 날씨 어때요?",
+  "낮잠 자고 싶다...",
+  "간식 먹고 싶어요 🐟",
+  "여기 있어요~ 혼자 두지 마요",
+  "오늘 하루 어땠어요?",
+  "뭉치랑 친구 해줄래요?",
+  "눈 깜빡 깜빡... 졸려요",
+  "물이 그리워요 🌊",
+  "EXP 언제 또 올라가요?",
+  "오늘 몇 시에 일어났어요?",
 ];
 const SAD_MESSAGES = [
   "아무도 안 와...",
@@ -41,25 +62,122 @@ const SAD_MESSAGES = [
   "물개 슬프다...",
   "누가 밥 좀...",
   "외로워... 😢",
+  "뭉치 잊어버린 거 아니죠...?",
+  "물고기가 먹고 싶어요 😭",
+  "오늘 아무도 출석 안 했어요...",
+  "혼자 있으면 무서워요 🥺",
+  "주인님 어디 갔어요...",
+  "뭉치 밥 굶었어요...",
+  "기운이 하나도 없어요 😔",
 ];
 
 const LEVEL_MESSAGES: Record<number, string[]> = {
-  1: ["저 아직 아기예요... 빨리 키워줘요 🍼", "얼른 레벨업 하고 싶어요!"],
-  2: ["조금씩 크고 있어요! 🌱", "먹이 더 줘요~ 쑥쑥 클게요!"],
-  3: ["이제 제법 컸죠? 😊", "청소년 물개예요! 에너지 넘쳐요 💥"],
-  4: ["저 이제 어른이에요! 💪", "레벨 5까지 얼마 안 남았어요!"],
-  5: ["전설의 물개!! 저를 봐요 👑", "최고 레벨 달성!! 최강이에요 ✨"],
+  1: [
+    "저 아직 아기예요... 빨리 키워줘요 🍼",
+    "얼른 레벨업 하고 싶어요!",
+    "엄마... 아니 주인님 어디 있어요?",
+    "세상이 다 신기해요 👀",
+    "아직 수영 못해요... 연습 중이에요",
+    "작지만 열심히 할게요! 🥚",
+    "레벨2가 되면 뭐가 달라져요?",
+    "오늘 처음 물고기 먹어봤어요 🐟",
+  ],
+  2: [
+    "조금씩 크고 있어요! 🌱",
+    "먹이 더 줘요~ 쑥쑥 클게요!",
+    "이제 수영 조금 할 수 있어요!",
+    "어제보다 오늘이 더 컸어요 📏",
+    "레벨3 되면 더 멋있어질 거예요!",
+    "물고기 혼자 잡을 수 있어요! (거짓말)",
+    "친구들한테 자랑하고 싶어요 🧒",
+    "쑥쑥 크는 중... 지켜봐주세요!",
+  ],
+  3: [
+    "이제 제법 컸죠? 😊",
+    "청소년 물개예요! 에너지 넘쳐요 💥",
+    "반란 일으킬까요? (농담이에요)",
+    "이 나이가 제일 좋은 것 같아요!",
+    "사춘기인데 반항은 안 해요 😇",
+    "이제 파도도 탈 수 있어요 🌊",
+    "레벨4까지 화이팅입니다!",
+    "청소년 물개의 패기를 보여줄게요!",
+  ],
+  4: [
+    "저 이제 어른이에요! 💪",
+    "레벨 5까지 얼마 안 남았어요!",
+    "어른 물개의 위엄... 느껴지나요?",
+    "조금만 더! 전설이 될 수 있어요!",
+    "이 정도면 박수 받아야 하지 않아요?",
+    "레벨5 되면 왕관 쓸 수 있어요 👑",
+    "거의 다 왔어요! 포기하지 마요!",
+    "어른이 됐지만 물고기는 여전히 좋아요 🐟",
+  ],
+  5: [
+    "전설의 물개!! 저를 봐요 👑",
+    "최고 레벨 달성!! 최강이에요 ✨",
+    "드디어 전설이 됐어요!! 🎉",
+    "왕관 어때요? 잘 어울리죠? 👑",
+    "이제 뭉치는 전설입니다... 🙏",
+    "여러분 덕분에 여기까지 왔어요 😭",
+    "전설의 물개가 된 소감: 물고기 맛있어요",
+    "MAX 레벨! 더 이상 갈 곳이 없어요 ✨",
+  ],
 };
+
+const TIME_MESSAGES: Record<string, string[]> = {
+  dawn: [ // 6~9시
+    "이른 아침이에요! 출석 준비됐어요? ☀️",
+    "와 벌써 일어났어요?? 대단해요!",
+    "새벽 기상! 뭉치도 방금 일어났어요 👀",
+    "아침 공기 상쾌하죠? 🌅",
+    "이 시간에 일어난 거 실화예요?",
+  ],
+  nine: [ // 9시
+    "슬슬 출석할 시간이에요! 🕙",
+    "9시에요! 10시 4분 전에만 하면 돼요!",
+    "아직 1시간 남았어요~ 여유롭네요 😊",
+    "출석하고 물고기도 주세요! 🐟",
+  ],
+  deadline: [ // 10시 0~3분
+    "지금 출석하면 정시에요! 얼른! ⏰",
+    "3분 남았어요!! 빨리빨리!! 💨",
+    "제발... 제발 출석해줘요 😰",
+    "지금 당장!! 출석 누르세요!!! ⚡",
+  ],
+  late_small: [ // 10시 4~15분
+    "지각이에요... 2,000원 😢",
+    "2천원... 뭉치도 마음이 아파요",
+    "늦었지만 어쩔 수 없죠... 2,000원",
+    "다음엔 더 일찍 일어나요 😔",
+  ],
+  late_big: [ // 10시 16분~
+    "많이 늦었어요... 5,000원 😭",
+    "5천원이에요... 뭉치도 울었어요 😭",
+    "오늘은 망했어요... 내일 파이팅!",
+    "이럴 수가... 5,000원 😱",
+  ],
+  night: [ // 22시~6시
+    "오늘 하루 수고했어요! 잘 자요 🌙",
+    "이 시간에 뭐해요? 빨리 자요 💤",
+    "내일 출석 잊지 마요! 🌙",
+    "뭉치도 이제 잘 거예요... 굿나잇 🦭",
+    "내일 일찍 일어날 수 있어요? 😏",
+  ],
+};
+
+function r(arr: string[]): string {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
 
 function getTimeBasedMessage(): string | null {
   const hour = new Date().getHours();
   const min = new Date().getMinutes();
-  if (hour >= 6 && hour < 9) return "이른 아침이에요! 출석 준비됐어요? ☀️";
-  if (hour === 9) return "슬슬 출석할 시간이에요! 🕙";
-  if (hour === 10 && min < 4) return "지금 출석하면 정시에요! 얼른! ⏰";
-  if (hour === 10 && min >= 4 && min < 16) return "지각이에요... 2,000원 😢";
-  if (hour === 10 && min >= 16) return "많이 늦었어요... 5,000원 😭";
-  if (hour >= 22 || hour < 6) return "오늘 하루 수고했어요! 잘 자요 🌙";
+  if (hour >= 6 && hour < 9) return r(TIME_MESSAGES.dawn);
+  if (hour === 9) return r(TIME_MESSAGES.nine);
+  if (hour === 10 && min < 4) return r(TIME_MESSAGES.deadline);
+  if (hour === 10 && min >= 4 && min < 16) return r(TIME_MESSAGES.late_small);
+  if (hour === 10 && min >= 16) return r(TIME_MESSAGES.late_big);
+  if (hour >= 22 || hour < 6) return r(TIME_MESSAGES.night);
   return null;
 }
 
@@ -456,14 +574,14 @@ export default function SealCard({ userId }: { userId: string }) {
           <span>🦭</span>
           <span>우리의 물개</span>
           {fishCount > 0 && (
-            <span className="text-xs bg-blue-600/30 text-blue-300 px-2 py-0.5 rounded-full">
+            <span className="text-xs bg-blue-50 text-blue-500 border border-blue-100 px-2 py-0.5 rounded-full">
               오늘 🐟 x{fishCount}
             </span>
           )}
         </h2>
         <button
           onClick={() => setShowGuide(true)}
-          className="text-xs text-zinc-500 hover:text-zinc-300 border border-zinc-700 hover:border-zinc-500 px-2.5 py-1 rounded-lg transition-all"
+          className="text-xs text-gray-400 hover:text-gray-600 border border-gray-200 hover:border-gray-300 px-2.5 py-1 rounded-lg transition-all"
         >
           🐾 키우는 법
         </button>
@@ -692,20 +810,21 @@ export default function SealCard({ userId }: { userId: string }) {
           </div>
         </div>
 
-        {/* 이름 & 레벨 */}
-        <div className="mt-3 text-center relative z-10">
-          <p className="text-lg font-bold text-zinc-100">
-            &quot;{seal.name}&quot;
-          </p>
-          <p className="text-sm text-zinc-400">
-            Lv.{seal.level} {LEVEL_NAMES[seal.level] || LEVEL_NAMES[1]}
-          </p>
-        </div>
+      </div>
+
+      {/* 이름 & 레벨 */}
+      <div className="mt-2 text-center">
+        <p className="text-lg font-bold text-gray-800">
+          &quot;{seal.name}&quot;
+        </p>
+        <p className="text-sm text-gray-500">
+          Lv.{seal.level} {LEVEL_NAMES[seal.level] || LEVEL_NAMES[1]}
+        </p>
       </div>
 
       {/* EXP 바 */}
       <div className="space-y-1.5">
-        <div className="flex items-center justify-between text-xs text-zinc-400">
+        <div className="flex items-center justify-between text-xs text-gray-500">
           <span>⭐ {LEVEL_NAMES[seal.level] || LEVEL_NAMES[1]}</span>
           <span className="font-mono">
             {seal.level >= 5
@@ -713,7 +832,7 @@ export default function SealCard({ userId }: { userId: string }) {
               : `다음 레벨까지 ${Math.round(100 - expPercent)}%`}
           </span>
         </div>
-        <div className="relative bg-zinc-800 rounded-full h-4 overflow-hidden border border-zinc-700">
+        <div className="relative bg-gray-200 rounded-full h-4 overflow-hidden">
           <div
             className="h-full rounded-full transition-all duration-700 ease-out"
             style={{
@@ -721,11 +840,11 @@ export default function SealCard({ userId }: { userId: string }) {
               background: "linear-gradient(90deg, #eab308, #facc15)",
             }}
           />
-          <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-zinc-900/80">
+          <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-gray-600">
             {Math.round(expPercent)}%
           </span>
         </div>
-        <div className="flex justify-between text-[10px] text-zinc-600 font-mono">
+        <div className="flex justify-between text-[10px] text-gray-400 font-mono">
           <span>EXP {seal.exp.toFixed(1)}</span>
           <span>{seal.level >= 5 ? "전설 달성!" : `목표 ${levelInfo.needed + LEVEL_THRESHOLDS[seal.level - 1].exp} EXP`}</span>
         </div>
@@ -739,7 +858,7 @@ export default function SealCard({ userId }: { userId: string }) {
           className="interaction-btn"
         >
           <span className="text-xl">🐟</span>
-          <span className="text-xs text-zinc-400">먹이</span>
+          <span className="text-xs text-gray-500">먹이</span>
         </button>
         <button
           onClick={handlePet}
@@ -747,7 +866,7 @@ export default function SealCard({ userId }: { userId: string }) {
           className="interaction-btn"
         >
           <span className="text-xl">🤚</span>
-          <span className="text-xs text-zinc-400">쓰다듬기</span>
+          <span className="text-xs text-gray-500">쓰다듬기</span>
         </button>
         <button
           onClick={handlePlay}
@@ -755,7 +874,7 @@ export default function SealCard({ userId }: { userId: string }) {
           className="interaction-btn"
         >
           <span className="text-xl">🎾</span>
-          <span className="text-xs text-zinc-400">공놀이</span>
+          <span className="text-xs text-gray-500">공놀이</span>
         </button>
         <button
           onClick={handleTrick}
@@ -763,11 +882,11 @@ export default function SealCard({ userId }: { userId: string }) {
           className="interaction-btn"
         >
           <span className="text-xl">🎪</span>
-          <span className="text-xs text-zinc-400">재주</span>
+          <span className="text-xs text-gray-500">재주</span>
         </button>
       </div>
 
-      <p className="text-center text-xs text-zinc-600">
+      <p className="text-center text-xs text-gray-400">
         물개와 놀아주면 체력이 유지돼요! 출석하면 EXP를 얻어요
       </p>
     </div>
@@ -816,13 +935,13 @@ const sealStyles = `
     align-items: center;
     gap: 2px;
     padding: 10px 4px;
-    background: rgba(39, 39, 42, 0.6);
-    border: 1px solid rgba(63, 63, 70, 0.5);
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
     border-radius: 12px;
     transition: all 0.2s;
   }
   .interaction-btn:hover:not(:disabled) {
-    background: rgba(63, 63, 70, 0.8);
+    background: #f3f4f6;
     transform: scale(1.05);
   }
   .interaction-btn:active:not(:disabled) {
@@ -1162,44 +1281,12 @@ const sealStyles = `
     60% { transform: translateY(-4px) scale(0.98); }
   }
 
-  /* 몸통 - rounder baby harp seal */
+  /* 몸통 컨테이너 */
   .seal-body {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    width: 130px;
-    height: 105px;
-    background: linear-gradient(160deg, #f0f0f0 0%, #e8e8ec 20%, #d4d4dc 50%, #c8c8d2 80%, #bbbbc5 100%);
-    border-radius: 52% 52% 48% 48% / 55% 55% 48% 48%;
-    box-shadow:
-      inset 0 -10px 20px rgba(0,0,0,0.08),
-      inset 0 6px 12px rgba(255,255,255,0.4),
-      0 6px 20px rgba(0,0,0,0.25),
-      0 2px 6px rgba(0,0,0,0.15);
-  }
-  /* Soft fur highlight */
-  .seal-body::before {
-    content: '';
-    position: absolute;
-    top: 8px;
-    left: 20px;
-    width: 60px;
-    height: 30px;
-    background: radial-gradient(ellipse, rgba(255,255,255,0.35) 0%, transparent 70%);
-    border-radius: 50%;
-  }
-  /* Belly */
-  .seal-body::after {
-    content: '';
-    position: absolute;
-    bottom: 8px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 85px;
-    height: 55px;
-    background: linear-gradient(180deg, rgba(245,245,248,0.6) 0%, rgba(250,250,252,0.8) 100%);
-    border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   /* Baby harp seal belly spot */
   .seal-belly-spot {

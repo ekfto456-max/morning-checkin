@@ -13,8 +13,9 @@ import MemberBoard from "@/components/MemberBoard";
 import PenaltyFund from "@/components/PenaltyFund";
 import FloatingChat from "@/components/FloatingChat";
 import SealFeed from "@/components/SealFeed";
+import ProfileCard from "@/components/ProfileCard";
 
-type User = { id: string; name: string; batch?: string; purpose?: string };
+type User = { id: string; name: string; batch?: string; purpose?: string; avatar_url?: string };
 type Checkin = {
   id: string;
   status: string;
@@ -30,7 +31,7 @@ export default function Home() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [loading, setLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [activeTab, setActiveTab] = useState<"home" | "seal" | "calendar" | "members" | "fund">("home");
+  const [activeTab, setActiveTab] = useState<"home" | "seal" | "calendar" | "members" | "fund" | "my">("home");
 
   // 실시간 시계
   useEffect(() => {
@@ -166,13 +167,14 @@ export default function Home() {
       </div>
 
       {/* 탭 네비게이션 */}
-      <div className="bg-white rounded-2xl p-1.5 shadow-sm border border-gray-100 grid grid-cols-5 gap-1">
+      <div className="bg-white rounded-2xl p-1.5 shadow-sm border border-gray-100 grid grid-cols-6 gap-1">
         {[
           { id: "home", label: "🏠", sub: "홈" },
           { id: "seal", label: "🦭", sub: "물개" },
           { id: "fund", label: "🔐", sub: "벌금통" },
           { id: "calendar", label: "📅", sub: "캘린더" },
           { id: "members", label: "👥", sub: "현황" },
+          { id: "my", label: "😊", sub: "MY" },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -227,6 +229,13 @@ export default function Home() {
         <PenaltyFund userId={user.id} userName={user.name} />
       ) : activeTab === "members" ? (
         <MemberBoard refreshKey={refreshKey} />
+      ) : activeTab === "my" ? (
+        <ProfileCard
+          user={user}
+          onUpdate={(updated) => {
+            setUser(updated);
+          }}
+        />
       ) : (
         <>
           {/* 출석 캘린더 */}

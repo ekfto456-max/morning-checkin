@@ -22,7 +22,78 @@ type Comment = {
   user_name: string;
 };
 
-const QUICK_REACTIONS = ["👍", "ㅋㅋㅋ", "대박", "화이팅!", "😂", "🔥"];
+const EMOJI_REACTIONS = ["👍", "❤️", "🔥", "😂"];
+const QUICK_COMMENTS = ["ㅋㅋㅋ", "대박", "화이팅!", "오늘도 최고!"];
+
+// 이모지 반응 바
+function ReactionBar({
+  checkinId,
+  currentUserId,
+}: {
+  checkinId: string;
+  currentUserId: string;
+}) {
+  const [reactions, setReactions] = useState<Record<string, string[]>>({});
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    fetch(`/api/reactions?checkin_id=${checkinId}`)
+      .then((r) => r.json())
+      .then((d) => setReactions(d || {}))
+      .catch(() => {});
+  }, [checkinId]);
+
+  const toggle = async (emoji: string) => {
+    if (loading) return;
+    setLoading(true);
+    const myReactions = reactions[emoji] || [];
+    const alreadyReacted = myReactions.includes(currentUserId);
+
+    // 낙관적 업데이트
+    setReactions((prev) => {
+      const next = { ...prev };
+      if (alreadyReacted) {
+        next[emoji] = (next[emoji] || []).filter((id) => id !== currentUserId);
+        if (next[emoji].length === 0) delete next[emoji];
+      } else {
+        next[emoji] = [...(next[emoji] || []), currentUserId];
+      }
+      return next;
+    });
+
+    await fetch("/api/reactions", {
+      method: alreadyReacted ? "DELETE" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ checkin_id: checkinId, user_id: currentUserId, emoji }),
+    });
+    setLoading(false);
+  };
+
+  return (
+    <div className="flex gap-1.5 flex-wrap mt-2">
+      {EMOJI_REACTIONS.map((emoji) => {
+        const users = reactions[emoji] || [];
+        const reacted = users.includes(currentUserId);
+        return (
+          <button
+            key={emoji}
+            onClick={() => toggle(emoji)}
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-sm transition-all active:scale-95 border ${
+              reacted
+                ? "bg-red-50 border-red-200 text-red-500 font-semibold"
+                : "bg-gray-100 border-gray-200 text-gray-500 hover:bg-gray-200"
+            }`}
+          >
+            <span>{emoji}</span>
+            {users.length > 0 && (
+              <span className="text-xs font-bold">{users.length}</span>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
 function CommentSection({
   checkinId,
@@ -121,9 +192,9 @@ function CommentSection({
             </div>
           )}
 
-          {/* 빠른 반응 */}
+          {/* 빠른 댓글 */}
           <div className="flex gap-1 flex-wrap">
-            {QUICK_REACTIONS.map((r) => (
+            {QUICK_COMMENTS.map((r) => (
               <button
                 key={r}
                 onClick={() => postComment(r)}
@@ -269,6 +340,11 @@ export default function TodayFeed({
                   <p className="text-amber-600 font-semibold">면제권 사용</p>
                   {item.reason && <p className="text-gray-500 text-xs mt-1">{item.reason}</p>}
                 </div>
+              )}
+
+              {/* 이모지 반응 (체크인만) */}
+              {item.type === "checkin" && currentUserId && (
+                <ReactionBar checkinId={item.id} currentUserId={currentUserId} />
               )}
 
               {/* 댓글 */}

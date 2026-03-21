@@ -159,23 +159,23 @@ export default function AttendanceCalendar({ userId }: { userId: string }) {
       <div className="flex items-center justify-between">
         <button
           onClick={prevMonth}
-          className="p-2 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
+          className="p-2 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors"
         >
           {"<"}
         </button>
-        <span className="text-lg font-semibold text-zinc-200">
+        <span className="text-lg font-semibold text-gray-800">
           {monthLabel}
         </span>
         <button
           onClick={nextMonth}
-          className="p-2 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
+          className="p-2 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors"
         >
           {">"}
         </button>
       </div>
 
       {loading ? (
-        <p className="text-zinc-500 text-center py-8">{"로딩 중..."}</p>
+        <p className="text-gray-400 text-center py-8">{"로딩 중..."}</p>
       ) : (
         <>
           {/* 요일 헤더 */}
@@ -184,7 +184,7 @@ export default function AttendanceCalendar({ userId }: { userId: string }) {
               <div
                 key={label}
                 className={`text-xs font-medium py-1 ${
-                  i === 0 ? "text-red-400" : i === 6 ? "text-blue-400" : "text-zinc-500"
+                  i === 0 ? "text-red-500" : i === 6 ? "text-blue-500" : "text-gray-400"
                 }`}
               >
                 {label}
@@ -207,21 +207,23 @@ export default function AttendanceCalendar({ userId }: { userId: string }) {
                   key={day}
                   className={`aspect-square rounded-lg flex flex-col items-center justify-center text-xs transition-colors ${
                     today
-                      ? "bg-zinc-700 ring-2 ring-yellow-500"
-                      : "bg-zinc-800/50"
+                      ? "ring-2 ring-red-400"
+                      : ""
                   } ${
                     status === "missed"
-                      ? "bg-red-950/30"
+                      ? "bg-red-50"
                       : status === "on_time"
-                      ? "bg-green-950/30"
+                      ? "bg-green-50"
                       : status === "exemption"
-                      ? "bg-yellow-950/30"
-                      : ""
+                      ? "bg-amber-50"
+                      : today
+                      ? "bg-red-500"
+                      : "bg-gray-100"
                   }`}
                 >
                   <span
                     className={`font-medium ${
-                      today ? "text-yellow-400" : "text-zinc-400"
+                      today && status === "none" ? "text-white" : today ? "text-red-600" : "text-gray-500"
                     }`}
                   >
                     {day}
@@ -235,7 +237,7 @@ export default function AttendanceCalendar({ userId }: { userId: string }) {
           </div>
 
           {/* 범례 */}
-          <div className="flex flex-wrap gap-3 justify-center text-xs text-zinc-400 pt-2 border-t border-zinc-800">
+          <div className="flex flex-wrap gap-3 justify-center text-xs text-gray-400 pt-2 border-t border-gray-100">
             <span>{"\u2705 정시"}</span>
             <span>{"\u26A0\uFE0F 지각"}</span>
             <span>{"\uD83C\uDFAB 면제"}</span>

@@ -189,19 +189,19 @@ export default function PenaltyFund({ userId, userName }: { userId: string; user
 
         {/* 금액 표시 */}
         <div className="text-center space-y-1">
-          <div className="text-4xl font-black text-yellow-400 money-pulse">
+          <div className="text-4xl font-black text-yellow-500 money-pulse">
             {formatKRW(data?.grandTotal || 0)}
           </div>
-          <div className="text-sm text-zinc-500">총 누적 벌금</div>
+          <div className="text-sm text-gray-500">총 누적 벌금</div>
         </div>
 
         {/* 납부 현황 바 */}
         <div className="space-y-2">
-          <div className="flex justify-between text-xs text-zinc-500">
-            <span>미납 <span className="text-red-400 font-semibold">{formatKRW(data?.unpaidTotal || 0)}</span></span>
-            <span>납부완료 <span className="text-green-400 font-semibold">{formatKRW(data?.paidTotal || 0)}</span></span>
+          <div className="flex justify-between text-xs text-gray-500">
+            <span>미납 <span className="text-red-500 font-semibold">{formatKRW(data?.unpaidTotal || 0)}</span></span>
+            <span>납부완료 <span className="text-green-500 font-semibold">{formatKRW(data?.paidTotal || 0)}</span></span>
           </div>
-          <div className="h-3 bg-zinc-800 rounded-full overflow-hidden border border-zinc-700 relative">
+          <div className="h-3 bg-gray-200 rounded-full overflow-hidden relative">
             <div
               className="h-full rounded-full transition-all duration-1000"
               style={{
@@ -228,18 +228,18 @@ export default function PenaltyFund({ userId, userName }: { userId: string; user
         </h3>
 
         {/* 계좌 정보 */}
-        <div className="bg-zinc-800/60 rounded-xl p-4 space-y-3 border border-zinc-700">
+        <div className="bg-gray-50 rounded-xl p-4 space-y-3 border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-zinc-500 mb-1">{ACCOUNT_BANK} · {ACCOUNT_HOLDER}</p>
-              <p className="text-2xl font-mono font-bold tracking-wider text-white">{ACCOUNT_NUMBER}</p>
+              <p className="text-xs text-gray-400 mb-1">{ACCOUNT_BANK} · {ACCOUNT_HOLDER}</p>
+              <p className="text-2xl font-mono font-bold tracking-wider text-gray-900">{ACCOUNT_NUMBER}</p>
             </div>
             <button
               onClick={copyAccount}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all shrink-0 ${
                 copied
-                  ? "bg-green-600 text-white"
-                  : "bg-zinc-700 hover:bg-zinc-600 text-zinc-300"
+                  ? "bg-green-500 text-white"
+                  : "bg-gray-200 hover:bg-gray-300 text-gray-700"
               }`}
             >
               {copied ? "✓ 복사됨" : "복사"}
@@ -249,25 +249,25 @@ export default function PenaltyFund({ userId, userName }: { userId: string; user
 
         {/* 벌금 규정 */}
         <div className="space-y-2 text-sm">
-          <div className="flex items-center gap-3 p-3 bg-green-500/10 border border-green-500/20 rounded-xl">
+          <div className="flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded-xl">
             <span className="text-lg">✅</span>
             <div>
-              <p className="text-green-400 font-semibold">10:04 이전</p>
-              <p className="text-zinc-400 text-xs">벌금 없음</p>
+              <p className="text-green-600 font-semibold">10:04 이전</p>
+              <p className="text-gray-500 text-xs">벌금 없음</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-xl">
+          <div className="flex items-center gap-3 p-3 bg-amber-50 border border-amber-200 rounded-xl">
             <span className="text-lg">⚠️</span>
             <div>
-              <p className="text-yellow-400 font-semibold">10:04 ~ 10:15</p>
-              <p className="text-zinc-400 text-xs">2,000원</p>
+              <p className="text-amber-600 font-semibold">10:04 ~ 10:15</p>
+              <p className="text-gray-500 text-xs">2,000원</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
+          <div className="flex items-center gap-3 p-3 bg-red-50 border border-red-200 rounded-xl">
             <span className="text-lg">💸</span>
             <div>
-              <p className="text-red-400 font-semibold">10:16 이후</p>
-              <p className="text-zinc-400 text-xs">5,000원</p>
+              <p className="text-red-500 font-semibold">10:16 이후</p>
+              <p className="text-gray-500 text-xs">5,000원</p>
             </div>
           </div>
         </div>
@@ -282,30 +282,30 @@ export default function PenaltyFund({ userId, userName }: { userId: string; user
 
         {/* 납부 폼 */}
         {showPayForm && (
-          <div className="space-y-3 pt-2 border-t border-zinc-700">
-            <p className="text-xs text-zinc-400">📸 송금 증빙 사진 제출 즉시 납부 완료 처리돼요!</p>
+          <div className="space-y-3 pt-2 border-t border-gray-100">
+            <p className="text-xs text-gray-500">📸 송금 증빙 사진 제출 즉시 납부 완료 처리돼요!</p>
             <div>
-              <label className="text-xs text-zinc-500 mb-1 block">납부 금액</label>
+              <label className="text-xs text-gray-500 mb-1 block">납부 금액</label>
               <input
                 type="number"
                 value={payAmount}
                 onChange={(e) => setPayAmount(e.target.value)}
                 placeholder="예: 2000"
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder-zinc-600 focus:outline-none focus:border-yellow-500"
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-amber-400"
               />
             </div>
             <div>
-              <label className="text-xs text-zinc-500 mb-1 block">메모 (선택)</label>
+              <label className="text-xs text-gray-500 mb-1 block">메모 (선택)</label>
               <input
                 type="text"
                 value={payNote}
                 onChange={(e) => setPayNote(e.target.value)}
                 placeholder="예: 3/20 지각분"
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder-zinc-600 focus:outline-none focus:border-yellow-500"
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-amber-400"
               />
             </div>
             <div>
-              <label className="text-xs text-zinc-500 mb-1 block">입금 증빙 사진 (선택)</label>
+              <label className="text-xs text-gray-500 mb-1 block">입금 증빙 사진 (선택)</label>
               <input ref={fileRef} type="file" accept="image/*" onChange={handleProofImage} className="hidden" />
               {payProof ? (
                 <div className="relative">
@@ -319,7 +319,7 @@ export default function PenaltyFund({ userId, userName }: { userId: string; user
               ) : (
                 <button
                   onClick={() => fileRef.current?.click()}
-                  className="w-full py-3 border border-dashed border-zinc-600 rounded-xl text-zinc-500 text-sm hover:border-zinc-400 hover:text-zinc-300 transition-colors"
+                  className="w-full py-3 border border-dashed border-gray-300 rounded-xl text-gray-400 text-sm hover:border-gray-400 hover:text-gray-600 transition-colors"
                 >
                   📷 사진 첨부
                 </button>
@@ -328,7 +328,7 @@ export default function PenaltyFund({ userId, userName }: { userId: string; user
             <button
               onClick={handleSubmitPayment}
               disabled={submitting || !payAmount}
-              className="w-full py-3 bg-zinc-700 hover:bg-zinc-600 disabled:opacity-40 text-white font-semibold rounded-xl transition-all active:scale-95"
+              className="w-full py-3 bg-amber-400 hover:bg-amber-500 disabled:opacity-40 text-white font-semibold rounded-xl transition-all active:scale-95"
             >
               {submitting ? "제출 중..." : "제출하기"}
             </button>
@@ -350,15 +350,15 @@ export default function PenaltyFund({ userId, userName }: { userId: string; user
               return (
                 <div key={u.user_id} className="space-y-1">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-zinc-300">
+                    <span className="text-gray-700">
                       {i === 0 && u.total > 0 ? "👑 " : ""}{u.name}
                     </span>
-                    <span className={u.total === 0 ? "text-green-400" : "text-red-400"}>
+                    <span className={u.total === 0 ? "text-green-500" : "text-red-500"}>
                       {u.total === 0 ? "✅ 벌금없음" : formatKRW(u.total)}
                     </span>
                   </div>
                   {u.total > 0 && (
-                    <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                    <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
                       <div
                         className="h-full rounded-full transition-all duration-700"
                         style={{
@@ -385,13 +385,13 @@ export default function PenaltyFund({ userId, userName }: { userId: string; user
             {data?.payments.map((p) => (
               <div
                 key={p.id}
-                className="flex items-center justify-between p-3 bg-zinc-800/40 rounded-xl border border-zinc-700/50"
+                className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100"
               >
                 <div className="flex items-center gap-3">
                   <span className="text-lg text-green-400">✅</span>
                   <div>
-                    <p className="text-sm font-medium text-zinc-200">{p.name}</p>
-                    <p className="text-xs text-zinc-500">
+                    <p className="text-sm font-medium text-gray-800">{p.name}</p>
+                    <p className="text-xs text-gray-400">
                       {new Date(p.created_at).toLocaleDateString("ko-KR")}
                       {p.note && ` · ${p.note}`}
                     </p>
@@ -558,9 +558,9 @@ function VaultSVG({ total, fillPercent }: { total: number; fillPercent: number }
         )}
       </svg>
 
-      <p className="text-xs text-zinc-600 -mt-1">
-        {total === 0 ? "아직 벌금이 없어요 🎉" : `🔐 ${Math.round(fillPercent)}% 채워짐`}
-      </p>
+      {total === 0 && (
+        <p className="text-xs text-gray-400 -mt-1">아직 벌금이 없어요 🎉</p>
+      )}
     </div>
   );
 }

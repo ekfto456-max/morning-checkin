@@ -88,23 +88,23 @@ export default function ExemptionCard({
     <div className="card space-y-4 relative overflow-hidden">
       <style>{exemptionStyles}</style>
 
-      <h2 className="text-lg font-semibold flex items-center gap-2">
+      <h2 className="text-lg font-bold flex items-center gap-2 text-gray-900">
         <span>🎫</span>
         <span>면제권</span>
         {exemptions.length > 0 && (
-          <span className="text-xs bg-yellow-600/30 text-yellow-400 px-2 py-0.5 rounded-full border border-yellow-600/40">
+          <span className="text-xs bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full border border-amber-200 font-semibold">
             {exemptions.length}장 보유
           </span>
         )}
       </h2>
 
       {loading ? (
-        <p className="text-zinc-500 text-center py-4">로딩 중...</p>
+        <p className="text-gray-400 text-center py-4 text-sm">로딩 중...</p>
       ) : exemptions.length === 0 ? (
-        <div className="text-center py-6 space-y-2">
+        <div className="text-center py-6 space-y-2 bg-gray-50 rounded-xl">
           <p className="text-4xl opacity-30">🎫</p>
-          <p className="text-zinc-600 text-sm">사용 가능한 면제권이 없습니다</p>
-          <p className="text-zinc-700 text-xs">매주 월요일에 1장씩 자동 지급됩니다</p>
+          <p className="text-gray-500 text-sm">사용 가능한 면제권이 없습니다</p>
+          <p className="text-gray-400 text-xs">매주 월요일에 1장씩 자동 지급됩니다</p>
         </div>
       ) : (
         <>
@@ -147,7 +147,7 @@ export default function ExemptionCard({
                     </div>
                   )}
                 </div>
-                <p className="text-center text-xs text-zinc-500 mt-2">
+                <p className="text-center text-xs text-gray-400 mt-2">
                   탭하여 뒤집기
                 </p>
               </div>
@@ -193,7 +193,7 @@ export default function ExemptionCard({
 
           {/* 사용 버튼 */}
           {hasCheckedInToday ? (
-            <p className="text-zinc-500 text-center text-sm py-1">
+            <p className="text-gray-500 text-center text-sm py-1">
               이미 출석했으므로 면제권을 사용할 수 없습니다
             </p>
           ) : !showConfirm ? (
@@ -203,26 +203,26 @@ export default function ExemptionCard({
                 setShowConfirm(true);
               }}
               disabled={!canUse}
-              className="w-full py-3 rounded-xl font-semibold text-sm transition-all duration-200 bg-gradient-to-r from-yellow-600 to-amber-500 hover:from-yellow-500 hover:to-amber-400 text-white disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-yellow-900/20"
+              className="w-full py-3 rounded-xl font-semibold text-sm transition-all duration-200 bg-gradient-to-r from-yellow-500 to-amber-400 hover:from-yellow-400 hover:to-amber-300 text-white disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-amber-200/50"
             >
               오늘 면제권 사용하기 🎫
             </button>
           ) : (
             <div className="space-y-2">
-              <p className="text-center text-yellow-400 text-sm font-medium">
+              <p className="text-center text-amber-600 text-sm font-medium">
                 정말 오늘 면제권을 사용할까요?
               </p>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={() => setShowConfirm(false)}
-                  className="py-2.5 rounded-xl text-sm border border-zinc-700 text-zinc-400 hover:bg-zinc-800"
+                  className="py-2.5 rounded-xl text-sm border border-gray-200 text-gray-500 hover:bg-gray-50"
                 >
                   취소
                 </button>
                 <button
                   onClick={useExemption}
                   disabled={using}
-                  className="py-2.5 rounded-xl text-sm bg-yellow-600 hover:bg-yellow-500 text-white font-semibold"
+                  className="py-2.5 rounded-xl text-sm bg-amber-400 hover:bg-amber-500 text-white font-semibold"
                 >
                   {using ? "사용 중..." : "사용하기"}
                 </button>
@@ -234,8 +234,8 @@ export default function ExemptionCard({
             <p
               className={`text-center text-sm ${
                 message.includes("실패") || message.includes("오류")
-                  ? "text-red-400"
-                  : "text-green-400"
+                  ? "text-red-500"
+                  : "text-green-500"
               }`}
             >
               {message}

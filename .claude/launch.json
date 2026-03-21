@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "Next.js Dev Server",
-      "runtimeExecutable": "bash",
-      "runtimeArgs": ["/c/checkin/start-죽기스.sh"],
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
       "port": 3000
     }
   ]

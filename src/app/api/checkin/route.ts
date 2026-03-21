@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { calculatePenalty, getKSTDayRange } from "@/lib/penalty";
 import { isUsingMockMode, mockCheckins, generateId, getMockSeal, updateMockSeal } from "@/lib/mock-store";
+import { grantWeeklyExemptions } from "@/lib/weekly-exemption";
 
 // 출석 시 물개 EXP 지급
 async function addSealExp(status: string, checkinHour: number, userId: string) {
@@ -262,23 +263,34 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // 전원 출석 여부 확인
-  const { count: memberCount } = await supabase
-    .from("users")
-    .select("id", { count: "exact", head: true });
+  // 전원 정시 출석 여부 확인 → 팀 보너스 +30 EXP
+  if (status === "on_time") {
+    const { count: memberCount } = await supabase
+      .from("users")
+      .select("id", { count: "exact", head: true });
 
-  const { count: checkinCount } = await supabase
-    .from("checkins")
-    .select("id", { count: "exact", head: true })
-    .gte("checkin_time", startOfDay.toISOString())
-    .lt("checkin_time", endOfDay.toISOString());
+    const { count: onTimeCount } = await supabase
+      .from("checkins")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "on_time")
+      .gte("checkin_time", startOfDay.toISOString())
+      .lt("checkin_time", endOfDay.toISOString());
 
-  if (memberCount && checkinCount && checkinCount >= memberCount && memberCount > 0) {
-    await insertSealLog(
-      "all_present",
-      "🎉",
-      "🎉 오늘 전원 출석 완료! 뭉치 너무 행복해 ❤️ EXP +30 팀보너스!"
-    );
+    if (memberCount && onTimeCount && onTimeCount >= memberCount && memberCount > 1) {
+      // 실제 EXP +30 지급
+      const { data: seal } = await supabase.from("seal").select("*").single();
+      if (seal) {
+        await supabase
+          .from("seal")
+          .update({ exp: seal.exp + 30 })
+          .eq("id", seal.id);
+      }
+      await insertSealLog(
+        "all_present",
+        "⚡",
+        `⚡ 전원 정시 출석 달성! 뭉치가 감동받았어 ❤️ 팀 보너스 +30 EXP!`
+      );
+    }
   }
 
   return NextResponse.json(data);
@@ -310,6 +322,9 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ todayCheckin, totalPenalty });
   }
+
+  // 앱 접속 시마다 주간 면제권 자동 지급 (현황 탭 미방문 시에도 보장)
+  await grantWeeklyExemptions();
 
   // Supabase 모드
   const { data: todayCheckin } = await supabase

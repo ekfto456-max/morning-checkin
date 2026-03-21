@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { isUsingMockMode, mockUsers, mockCheckins, mockExemptions } from "@/lib/mock-store";
+import { grantWeeklyExemptions } from "@/lib/weekly-exemption";
 
 export async function GET() {
   const today = new Date();
@@ -93,34 +94,9 @@ export async function GET() {
     return NextResponse.json({ error: usersError.message }, { status: 500 });
   }
 
-  // ── 주간 면제권 자동 지급 (이번 주 월요일 기준, 전체 유저 대상) ──
-  const now = new Date();
-  const dayOfWeek = now.getDay(); // 0=일, 1=월, ...
-  const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-  const thisMonday = new Date(now.getFullYear(), now.getMonth(), now.getDate() + mondayOffset);
-  const thisMondayStr = thisMonday.toISOString().split("T")[0];
-
-  // 이번 주에 이미 지급된 면제권: user_id 목록 가져오기
-  const { data: alreadyGranted } = await supabase
-    .from("exemptions")
-    .select("user_id")
-    .gte("granted_at", `${thisMondayStr}T00:00:00.000Z`);
-
-  const alreadyGrantedIds = new Set((alreadyGranted || []).map((e) => e.user_id));
-
-  // 아직 지급 안 된 유저에게 지급
-  const toGrant = (users || []).filter((u) => !alreadyGrantedIds.has(u.id));
-  if (toGrant.length > 0) {
-    const weekLabel = `${now.getMonth() + 1}월 ${Math.ceil(now.getDate() / 7)}주차 면제권`;
-    await supabase.from("exemptions").insert(
-      toGrant.map((u) => ({
-        user_id: u.id,
-        reason: weekLabel,
-        granted_at: now.toISOString(),
-      }))
-    );
-  }
-  // ────────────────────────────────────────────────────────────────
+  // ── 주간 면제권 자동 지급 ──
+  await grantWeeklyExemptions();
+  // ─────────────────────────
 
   // 오늘 체크인
   const { data: checkins, error: checkinsError } = await supabase
@@ -161,6 +137,19 @@ export async function GET() {
   if (allCheckinsError) {
     return NextResponse.json({ error: allCheckinsError.message }, { status: 500 });
   }
+
+  // 오늘 뭉치 상호작용 횟수 (seal_logs)
+  const { data: todaySealLogs } = await supabase
+    .from("seal_logs")
+    .select("user_id")
+    .gte("created_at", startOfDay.toISOString())
+    .lt("created_at", endOfDay.toISOString())
+    .not("user_id", "is", null);
+
+  const sealInteractionMap: Record<string, number> = {};
+  todaySealLogs?.forEach((log) => {
+    if (log.user_id) sealInteractionMap[log.user_id] = (sealInteractionMap[log.user_id] || 0) + 1;
+  });
 
   // 누적 벌금 맵
   const penaltyMap: Record<string, number> = {};
@@ -214,6 +203,7 @@ export async function GET() {
       totalPenalty: penaltyMap[user.id] || 0,
       remainingExemptions: unusedMap[user.id] || 0,
       exemptionReason,
+      sealInteractions: sealInteractionMap[user.id] || 0,
     };
   });
 
