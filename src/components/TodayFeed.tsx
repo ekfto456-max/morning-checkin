@@ -183,6 +183,9 @@ export default function TodayFeed({
       }
     };
     fetchFeed();
+    // 5초마다 자동 폴링
+    const interval = setInterval(fetchFeed, 5000);
+    return () => clearInterval(interval);
   }, [refreshKey]);
 
   const formatTime = (time: string) => {
