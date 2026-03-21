@@ -9,9 +9,9 @@ async function addSealExp(status: string, checkinHour: number, userId: string) {
   let amount = 0;
 
   if (status === "on_time") {
-    amount = checkinHour < 7 ? 20 : 10; // 새벽 기상 +20, 정시 +10
+    amount = checkinHour < 7 ? 4 : 2; // 새벽 기상 +4, 정시 +2
   } else {
-    amount = -10; // 지각 -10 EXP
+    amount = -2; // 지각 -2 EXP
   }
 
   if (isUsingMockMode()) {
@@ -40,7 +40,7 @@ async function addSealExp(status: string, checkinHour: number, userId: string) {
       if (data) streak++;
       else break;
     }
-    if (streak >= 5) amount += 5;
+    if (streak >= 5) amount += 1;
   }
 
   // Supabase: 물개 EXP 업데이트
@@ -282,13 +282,13 @@ export async function POST(request: NextRequest) {
       if (seal) {
         await supabase
           .from("seal")
-          .update({ exp: seal.exp + 30 })
+          .update({ exp: seal.exp + 6 })
           .eq("id", seal.id);
       }
       await insertSealLog(
         "all_present",
         "⚡",
-        `⚡ 전원 정시 출석 달성! 뭉치가 감동받았어 ❤️ 팀 보너스 +30 EXP!`
+        `⚡ 전원 정시 출석 달성! 뭉치가 감동받았어 ❤️ 팀 보너스 +6 EXP!`
       );
     }
   }

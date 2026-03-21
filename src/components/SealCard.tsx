@@ -618,11 +618,11 @@ export default function SealCard({ userId }: { userId: string }) {
               </p>
               <div className="space-y-1.5">
                 {[
-                  { icon: "✅", label: "정시 출석 (10:03 이전)", exp: "+10 EXP", color: "text-green-400" },
-                  { icon: "🌅", label: "새벽 기상 보너스 (오전 7시 이전)", exp: "+20 EXP", color: "text-blue-400" },
-                  { icon: "⚡", label: "전원 정시 출석 (팀 보너스)", exp: "+30 EXP", color: "text-yellow-400" },
-                  { icon: "🔥", label: "연속 출석 5일 이상", exp: "+5 EXP", color: "text-orange-400" },
-                  { icon: "❌", label: "지각 출석", exp: "-10 EXP", color: "text-red-400" },
+                  { icon: "✅", label: "정시 출석 (10:03 이전)", exp: "+2 EXP", color: "text-green-400" },
+                  { icon: "🌅", label: "새벽 기상 보너스 (오전 7시 이전)", exp: "+4 EXP", color: "text-blue-400" },
+                  { icon: "⚡", label: "전원 정시 출석 (팀 보너스)", exp: "+6 EXP", color: "text-yellow-400" },
+                  { icon: "🔥", label: "연속 출석 5일 이상", exp: "+1 EXP", color: "text-orange-400" },
+                  { icon: "❌", label: "지각 출석", exp: "-2 EXP", color: "text-red-400" },
                 ].map((item) => (
                   <div key={item.label} className="flex items-center justify-between bg-zinc-800/60 rounded-xl px-3 py-2.5">
                     <span className="text-sm text-zinc-300 flex items-center gap-2">
