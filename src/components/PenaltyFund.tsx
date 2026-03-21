@@ -178,13 +178,13 @@ export default function PenaltyFund({ userId, userName }: { userId: string; user
       {/* 돼지저금통 메인 카드 */}
       <div className="card space-y-5">
         <h2 className="text-lg font-semibold flex items-center gap-2">
-          <span>🐷</span>
+          <span>🔐</span>
           <span>죽기스 벌금통</span>
         </h2>
 
-        {/* 돼지저금통 SVG */}
+        {/* 금고 SVG */}
         <div className="piggy-wrapper" onClick={triggerCoinRain}>
-          <PiggyBankSVG total={data?.grandTotal || 0} />
+          <VaultSVG total={data?.grandTotal || 0} fillPercent={fillPercent} />
         </div>
 
         {/* 금액 표시 */}
@@ -410,132 +410,156 @@ export default function PenaltyFund({ userId, userName }: { userId: string; user
   );
 }
 
-function PiggyBankSVG({ total }: { total: number }) {
-  // 금액에 따라 돈 이모지 개수 결정 (2000원마다 1개, 최대 9개)
-  const emojiCount = total === 0 ? 0 : Math.min(9, Math.max(1, Math.ceil(total / 2000)));
+function VaultSVG({ total, fillPercent }: { total: number; fillPercent: number }) {
+  const cx = 110, cy = 138, r = 72;
+  const fillH = Math.max(0, (fillPercent / 100) * (r * 2));
+  const fillY = cy + r - fillH;
+  const dialAngle = (fillPercent / 100) * 270 - 135; // dial rotates with fill
 
-  // 돼지 배 안 이모지 위치 (몸통 ellipse: cx=110 cy=160 rx=75 ry=70 기준)
-  const moneySlots = [
-    { x: 110, y: 172, e: "💰", delay: 0.0 },
-    { x: 83,  y: 185, e: "💵", delay: 0.4 },
-    { x: 137, y: 185, e: "💵", delay: 0.7 },
-    { x: 69,  y: 163, e: "💰", delay: 0.2 },
-    { x: 151, y: 163, e: "💰", delay: 0.5 },
-    { x: 95,  y: 202, e: "💵", delay: 0.1 },
-    { x: 125, y: 202, e: "💵", delay: 0.6 },
-    { x: 110, y: 148, e: "💰", delay: 0.3 },
-    { x: 110, y: 215, e: "💵", delay: 0.8 },
-  ];
+  const notches = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
 
   return (
     <div className="relative flex flex-col items-center">
-      <svg width="300" height="310" viewBox="0 0 220 240" className="drop-shadow-xl">
+      <svg width="280" height="290" viewBox="0 0 220 240" className="drop-shadow-xl">
         <defs>
           <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#fef08a" />
-            <stop offset="40%" stopColor="#eab308" />
+            <stop offset="50%" stopColor="#eab308" />
             <stop offset="100%" stopColor="#a16207" />
           </linearGradient>
-          <linearGradient id="glassGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="white" stopOpacity="0.15" />
-            <stop offset="50%" stopColor="white" stopOpacity="0.05" />
-            <stop offset="100%" stopColor="white" stopOpacity="0" />
+          <linearGradient id="fillGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+            <stop offset="0%" stopColor="#92400e" stopOpacity="0.95" />
+            <stop offset="60%" stopColor="#d97706" stopOpacity="0.9" />
+            <stop offset="100%" stopColor="#fbbf24" stopOpacity="0.85" />
           </linearGradient>
-          <clipPath id="piggyBodyClip">
-            <ellipse cx="110" cy="160" rx="73" ry="68" />
+          <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#27272a" />
+            <stop offset="100%" stopColor="#18181b" />
+          </linearGradient>
+          <linearGradient id="doorGrad" x1="20%" y1="0%" x2="80%" y2="100%">
+            <stop offset="0%" stopColor="#3f3f46" />
+            <stop offset="100%" stopColor="#18181b" />
+          </linearGradient>
+          <radialGradient id="glowGrad" cx="50%" cy="30%" r="60%">
+            <stop offset="0%" stopColor="#fbbf24" stopOpacity={fillPercent > 0 ? 0.12 : 0} />
+            <stop offset="100%" stopColor="#fbbf24" stopOpacity="0" />
+          </radialGradient>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="3" result="blur" />
+            <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+          </filter>
+          <clipPath id="doorClip">
+            <circle cx={cx} cy={cy} r={r - 2} />
           </clipPath>
         </defs>
 
-        {/* 그림자 */}
-        <ellipse cx="110" cy="232" rx="70" ry="8" fill="rgba(0,0,0,0.3)" />
+        {/* 바닥 그림자 */}
+        <ellipse cx="110" cy="234" rx="82" ry="8" fill="rgba(0,0,0,0.45)" />
 
-        {/* 다리 4개 */}
-        {[70, 90, 120, 140].map((x, i) => (
-          <g key={i}>
-            <rect x={x} y="216" width="14" height="16" rx="7" fill="url(#goldGrad)" />
-            <rect x={x} y="228" width="14" height="6" rx="3" fill="#a16207" />
-          </g>
-        ))}
+        {/* 금고 본체 */}
+        <rect x="18" y="22" width="184" height="204" rx="20" fill="url(#bodyGrad)" />
+        <rect x="18" y="22" width="184" height="204" rx="20" fill="none" stroke="url(#goldGrad)" strokeWidth="2" />
 
-        {/* 꼬리 */}
-        <path d="M 185 160 Q 205 145 195 130 Q 185 115 200 105" fill="none" stroke="url(#goldGrad)" strokeWidth="4" strokeLinecap="round" />
+        {/* 패널 라인 (디테일) */}
+        <rect x="26" y="30" width="168" height="188" rx="14" fill="none" stroke="rgba(234,179,8,0.15)" strokeWidth="1" />
 
-        {/* 몸통 */}
-        <ellipse cx="110" cy="160" rx="75" ry="70" fill="#1c1c1c" stroke="url(#goldGrad)" strokeWidth="3" />
+        {/* 동전 투입구 */}
+        <rect x="78" y="30" width="64" height="9" rx="4.5" fill="#111" stroke="url(#goldGrad)" strokeWidth="1.5" />
 
-        {/* 💰 돈 이모지들 (금액만큼 쌓임) */}
-        {moneySlots.slice(0, emojiCount).map((slot, i) => (
-          <text
-            key={i}
-            x={slot.x}
-            y={slot.y}
-            textAnchor="middle"
-            dominantBaseline="middle"
-            fontSize="18"
-            clipPath="url(#piggyBodyClip)"
-          >
-            {slot.e}
-            <animateTransform
-              attributeName="transform"
-              type="translate"
-              values="0,0; 0,-3; 0,0"
-              dur="2s"
-              begin={`${slot.delay}s`}
-              repeatCount="indefinite"
-              calcMode="spline"
-              keySplines="0.45 0 0.55 1; 0.45 0 0.55 1"
+        {/* 왼쪽 경첩 */}
+        <rect x="18" y="68" width="11" height="24" rx="5.5" fill="url(#goldGrad)" />
+        <rect x="18" y="148" width="11" height="24" rx="5.5" fill="url(#goldGrad)" />
+
+        {/* 도어 금색 외곽 링 */}
+        <circle cx={cx} cy={cy} r={r + 6} fill="url(#goldGrad)" />
+        <circle cx={cx} cy={cy} r={r + 3} fill="#111" />
+
+        {/* 도어 본체 */}
+        <circle cx={cx} cy={cy} r={r} fill="url(#doorGrad)" />
+
+        {/* 금액 채워짐 */}
+        <rect
+          x={cx - r}
+          y={fillY}
+          width={r * 2}
+          height={fillH + 2}
+          fill="url(#fillGrad)"
+          clipPath="url(#doorClip)"
+        />
+
+        {/* 채워짐 상단 물결 효과 */}
+        {fillPercent > 0 && (
+          <ellipse
+            cx={cx}
+            cy={fillY}
+            rx={r - 2}
+            ry={5}
+            fill="#fbbf24"
+            fillOpacity="0.4"
+            clipPath="url(#doorClip)"
+          />
+        )}
+
+        {/* 글로우 */}
+        <circle cx={cx} cy={cy} r={r} fill="url(#glowGrad)" clipPath="url(#doorClip)" />
+
+        {/* 도어 내부 장식 링 */}
+        <circle cx={cx} cy={cy} r={r - 10} fill="none" stroke="rgba(234,179,8,0.25)" strokeWidth="1.5" strokeDasharray="5 4" />
+
+        {/* 다이얼 눈금 */}
+        {notches.map((angle) => {
+          const rad = ((angle - 90) * Math.PI) / 180;
+          const isMajor = angle % 90 === 0;
+          const inner = isMajor ? r - 20 : r - 16;
+          const outer = r - 10;
+          return (
+            <line
+              key={angle}
+              x1={cx + inner * Math.cos(rad)}
+              y1={cy + inner * Math.sin(rad)}
+              x2={cx + outer * Math.cos(rad)}
+              y2={cy + outer * Math.sin(rad)}
+              stroke={isMajor ? "rgba(234,179,8,0.7)" : "rgba(234,179,8,0.3)"}
+              strokeWidth={isMajor ? 2 : 1}
+              strokeLinecap="round"
             />
-          </text>
-        ))}
+          );
+        })}
 
-        {/* 비어있을 때 */}
+        {/* 다이얼 원 */}
+        <circle cx={cx} cy={cy} r="24" fill="#1c1c1c" stroke="url(#goldGrad)" strokeWidth="2.5" />
+        <circle cx={cx} cy={cy} r="18" fill="#111" stroke="rgba(234,179,8,0.3)" strokeWidth="1" />
+
+        {/* 다이얼 포인터 (금액에 따라 회전) */}
+        <line
+          x1={cx}
+          y1={cy}
+          x2={cx + 14 * Math.cos(((dialAngle - 90) * Math.PI) / 180)}
+          y2={cy + 14 * Math.sin(((dialAngle - 90) * Math.PI) / 180)}
+          stroke="#fbbf24"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          filter="url(#glow)"
+        />
+        <circle cx={cx} cy={cy} r="4.5" fill="url(#goldGrad)" />
+
+        {/* 핸들 */}
+        <rect x="190" y="118" width="13" height="44" rx="6.5" fill="url(#goldGrad)" />
+        <rect x="192" y="125" width="9" height="30" rx="4.5" fill="#a16207" fillOpacity="0.5" />
+
+        {/* 도어 유리 반사 */}
+        <ellipse cx={cx - 22} cy={cy - 28} rx="20" ry="14" fill="rgba(255,255,255,0.04)" transform={`rotate(-30 ${cx - 22} ${cy - 28})`} />
+
+        {/* 비어있을 때 텍스트 */}
         {total === 0 && (
-          <text x="110" y="168" textAnchor="middle" fontSize="12" fill="rgba(255,255,255,0.3)" fontFamily="system-ui">
+          <text x={cx} y={cy + 4} textAnchor="middle" fontSize="11" fill="rgba(255,255,255,0.18)" fontFamily="system-ui">
             비어있어요
           </text>
         )}
-
-        {/* 몸통 윤곽 (금 테두리) */}
-        <ellipse cx="110" cy="160" rx="75" ry="70" fill="none" stroke="url(#goldGrad)" strokeWidth="2.5" />
-
-        {/* 유리 반사 */}
-        <ellipse cx="110" cy="160" rx="75" ry="70" fill="url(#glassGrad)" />
-        <ellipse cx="85" cy="135" rx="25" ry="18" fill="rgba(255,255,255,0.06)" />
-
-        {/* 머리 */}
-        <circle cx="110" cy="90" r="38" fill="#1c1c1c" stroke="url(#goldGrad)" strokeWidth="2.5" />
-        <circle cx="110" cy="90" r="38" fill="url(#glassGrad)" />
-
-        {/* 귀 */}
-        <ellipse cx="78" cy="62" rx="13" ry="16" fill="#1c1c1c" stroke="url(#goldGrad)" strokeWidth="2" transform="rotate(-15 78 62)" />
-        <ellipse cx="78" cy="62" rx="8" ry="10" fill="#2d1a1a" transform="rotate(-15 78 62)" />
-        <ellipse cx="142" cy="62" rx="13" ry="16" fill="#1c1c1c" stroke="url(#goldGrad)" strokeWidth="2" transform="rotate(15 142 62)" />
-        <ellipse cx="142" cy="62" rx="8" ry="10" fill="#2d1a1a" transform="rotate(15 142 62)" />
-
-        {/* 눈 */}
-        <circle cx="95" cy="85" r="7" fill="#111" stroke="url(#goldGrad)" strokeWidth="1.5" />
-        <circle cx="125" cy="85" r="7" fill="#111" stroke="url(#goldGrad)" strokeWidth="1.5" />
-        <circle cx="97" cy="83" r="2.5" fill="white" />
-        <circle cx="127" cy="83" r="2.5" fill="white" />
-
-        {/* 코 */}
-        <ellipse cx="110" cy="103" rx="14" ry="10" fill="#1a0a0a" stroke="url(#goldGrad)" strokeWidth="1.5" />
-        <circle cx="104" cy="103" r="4" fill="#2d1212" />
-        <circle cx="116" cy="103" r="4" fill="#2d1212" />
-        <circle cx="103" cy="102" r="1.5" fill="rgba(255,255,255,0.3)" />
-        <circle cx="115" cy="102" r="1.5" fill="rgba(255,255,255,0.3)" />
-
-        {/* 동전 투입구 */}
-        <rect x="92" y="55" width="36" height="6" rx="3" fill="#1c1c1c" stroke="url(#goldGrad)" strokeWidth="1.5" />
-
-        {/* 몸통-머리 연결 */}
-        <ellipse cx="110" cy="122" rx="30" ry="12" fill="#1c1c1c" stroke="none" />
-        <ellipse cx="110" cy="90" rx="38" ry="38" fill="none" stroke="url(#goldGrad)" strokeWidth="2.5" />
       </svg>
 
-      {/* 금액에 따른 설명 */}
-      <p className="text-xs text-zinc-600 -mt-2">
-        {total === 0 ? "아직 벌금이 없어요 🎉" : `💰 ${emojiCount}개 쌓임 (${(2000).toLocaleString()}원당 1개)`}
+      <p className="text-xs text-zinc-600 -mt-1">
+        {total === 0 ? "아직 벌금이 없어요 🎉" : `🔐 ${Math.round(fillPercent)}% 채워짐`}
       </p>
     </div>
   );

@@ -163,7 +163,7 @@ export default function Home() {
         {[
           { id: "home", label: "🏠", sub: "홈" },
           { id: "seal", label: "🦭", sub: "물개" },
-          { id: "fund", label: "🐷", sub: "벌금통" },
+          { id: "fund", label: "🔐", sub: "벌금통" },
           { id: "calendar", label: "📅", sub: "캘린더" },
           { id: "members", label: "👥", sub: "현황" },
         ].map((tab) => (
