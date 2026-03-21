@@ -9,10 +9,9 @@ export const metadata: Metadata = {
     capable: true,
     statusBarStyle: "black-translucent",
     title: "죽기스",
-    startupImage: "/apple-touch-icon.png",
   },
   icons: {
-    apple: "/apple-touch-icon.png",
+    apple: "/mascot.jpg",
   },
 };
 
