@@ -62,12 +62,18 @@ export async function GET(request: NextRequest) {
     .select("*, users(name)")
     .eq("used_for_date", todayStr);
 
+  const { data: posts } = await supabase
+    .from("posts")
+    .select("*, users(name)")
+    .gte("created_at", startOfDay.toISOString())
+    .lt("created_at", endOfDay.toISOString());
+
   const feed = [
     ...(checkins || []).map((c: Record<string, unknown>) => ({
       id: c.id,
       user_id: c.user_id,
       user_name: (c.users as Record<string, string>)?.name || "알 수 없음",
-      checkin_time: c.checkin_time,
+      checkin_time: c.checkin_time as string,
       image_url: c.image_url,
       status: c.status,
       penalty: c.penalty,
@@ -77,12 +83,21 @@ export async function GET(request: NextRequest) {
       id: e.id,
       user_id: e.user_id,
       user_name: (e.users as Record<string, string>)?.name || "알 수 없음",
-      checkin_time: e.used_at || e.granted_at,
+      checkin_time: (e.used_at || e.granted_at) as string,
       type: "exemption" as const,
       reason: e.reason,
     })),
+    ...(posts || []).map((p: Record<string, unknown>) => ({
+      id: p.id,
+      user_id: p.user_id,
+      user_name: (p.users as Record<string, string>)?.name || "알 수 없음",
+      checkin_time: p.created_at as string,
+      content: p.content,
+      image_url: p.image_url,
+      type: "post" as const,
+    })),
   ].sort(
-    (a, b) => new Date(a.checkin_time as string).getTime() - new Date(b.checkin_time as string).getTime()
+    (a, b) => new Date(a.checkin_time).getTime() - new Date(b.checkin_time).getTime()
   );
 
   return NextResponse.json(feed);
