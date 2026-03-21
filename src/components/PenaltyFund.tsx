@@ -252,7 +252,7 @@ export default function PenaltyFund({ userId, userName }: { userId: string; user
           <div className="flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded-xl">
             <span className="text-lg">✅</span>
             <div>
-              <p className="text-green-600 font-semibold">10:04 이전</p>
+              <p className="text-green-600 font-semibold">10:03 이전</p>
               <p className="text-gray-500 text-xs">벌금 없음</p>
             </div>
           </div>

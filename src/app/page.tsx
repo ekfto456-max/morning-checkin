@@ -161,7 +161,7 @@ export default function Home() {
         </div>
         <p className="text-sm text-white/70">
           마감{" "}
-          <span className="text-white font-bold">오전 10:04</span>
+          <span className="text-white font-bold">오전 10:03</span>
           {" "}까지 출석하세요
         </p>
       </div>
