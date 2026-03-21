@@ -351,6 +351,8 @@ export default function TodayFeed({
   const [profileModal, setProfileModal] = useState<{ userId: string; userName: string } | null>(null);
   const [localRefresh, setLocalRefresh] = useState(0);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [showAll, setShowAll] = useState(false);
+  const INITIAL_SHOW = 10;
 
   const handleDeletePost = async (postId: string) => {
     if (!currentUserId || deletingId) return;
@@ -426,7 +428,7 @@ export default function TodayFeed({
         </div>
       ) : (
         <div className="space-y-3">
-          {feed.map((item) => (
+          {(showAll ? feed : feed.slice(0, INITIAL_SHOW)).map((item) => (
             <div key={item.id} className="bg-gray-50 rounded-xl p-3 border border-gray-100">
               {/* 헤더 */}
               <div className="flex items-center justify-between mb-2">
@@ -516,6 +518,14 @@ export default function TodayFeed({
               )}
             </div>
           ))}
+          {feed.length > INITIAL_SHOW && (
+            <button
+              onClick={() => setShowAll((v) => !v)}
+              className="w-full text-xs text-gray-400 hover:text-gray-600 py-2 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors"
+            >
+              {showAll ? "접기 ▲" : `더보기 (${feed.length - INITIAL_SHOW}개 더) ▼`}
+            </button>
+          )}
         </div>
       )}
 

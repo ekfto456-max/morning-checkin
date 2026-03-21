@@ -52,10 +52,13 @@ function LogItem({ log, index }: { log: SealLog; index: number }) {
   );
 }
 
+const INITIAL_SHOW = 10;
+
 export default function SealFeed({ refreshKey }: Props) {
   const [logs, setLogs] = useState<SealLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [logKey, setLogKey] = useState(0);
+  const [showAll, setShowAll] = useState(false);
 
   const fetchLogs = async () => {
     try {
@@ -103,9 +106,17 @@ export default function SealFeed({ refreshKey }: Props) {
         </div>
       ) : (
         <div key={logKey} className="space-y-4">
-          {logs.map((log, i) => (
+          {(showAll ? logs : logs.slice(0, INITIAL_SHOW)).map((log, i) => (
             <LogItem key={log.id} log={log} index={i} />
           ))}
+          {logs.length > INITIAL_SHOW && (
+            <button
+              onClick={() => setShowAll((v) => !v)}
+              className="w-full text-xs text-gray-400 hover:text-gray-600 py-2 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors"
+            >
+              {showAll ? "접기 ▲" : `더보기 (${logs.length - INITIAL_SHOW}개 더) ▼`}
+            </button>
+          )}
         </div>
       )}
     </div>
