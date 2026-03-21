@@ -357,9 +357,10 @@ export default function TodayFeed({
   const handleDeletePost = async (postId: string) => {
     if (!currentUserId || deletingId) return;
     setDeletingId(postId);
-    // 낙관적 업데이트
-    setFeed((prev) => prev.filter((item) => item.id !== postId));
-    await fetch(`/api/posts?id=${postId}&user_id=${currentUserId}`, { method: "DELETE" });
+    const res = await fetch(`/api/posts?id=${postId}&user_id=${currentUserId}`, { method: "DELETE" });
+    if (res.ok) {
+      setFeed((prev) => prev.filter((item) => item.id !== postId));
+    }
     setDeletingId(null);
   };
 
