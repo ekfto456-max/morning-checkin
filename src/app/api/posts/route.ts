@@ -90,21 +90,21 @@ export async function POST(request: NextRequest) {
 
 // DELETE: 본인 게시글 삭제
 export async function DELETE(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  const postId = searchParams.get("id");
-  const userId = searchParams.get("user_id");
+  const postId = request.nextUrl.searchParams.get("id");
+  const userId = request.nextUrl.searchParams.get("user_id");
 
   if (!postId || !userId) {
     return NextResponse.json({ error: "id, user_id 필요" }, { status: 400 });
   }
 
-  const { error } = await supabase
+  const { error, count } = await supabase
     .from("posts")
-    .delete()
+    .delete({ count: "exact" })
     .eq("id", postId)
     .eq("user_id", userId);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (count === 0) return NextResponse.json({ error: "삭제할 게시글 없음 (권한 또는 ID 불일치)" }, { status: 404 });
 
   return NextResponse.json({ success: true });
 }

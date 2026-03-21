@@ -360,6 +360,9 @@ export default function TodayFeed({
     const res = await fetch(`/api/posts?id=${postId}&user_id=${currentUserId}`, { method: "DELETE" });
     if (res.ok) {
       setFeed((prev) => prev.filter((item) => item.id !== postId));
+    } else {
+      const body = await res.json().catch(() => ({}));
+      alert(`삭제 실패: ${body.error || res.status}`);
     }
     setDeletingId(null);
   };
