@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { isUsingMockMode, mockCheckins, mockUsers, mockExemptions } from "@/lib/mock-store";
 
+export const dynamic = "force-dynamic";
+
 // 오늘의 인증샷 피드 (단톡방처럼)
 export async function GET(request: NextRequest) {
   const today = new Date();

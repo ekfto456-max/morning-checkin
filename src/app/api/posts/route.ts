@@ -87,3 +87,24 @@ export async function POST(request: NextRequest) {
     type: "post" as const,
   });
 }
+
+// DELETE: 본인 게시글 삭제
+export async function DELETE(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const postId = searchParams.get("id");
+  const userId = searchParams.get("user_id");
+
+  if (!postId || !userId) {
+    return NextResponse.json({ error: "id, user_id 필요" }, { status: 400 });
+  }
+
+  const { error } = await supabase
+    .from("posts")
+    .delete()
+    .eq("id", postId)
+    .eq("user_id", userId);
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  return NextResponse.json({ success: true });
+}

@@ -350,6 +350,16 @@ export default function TodayFeed({
   const [loading, setLoading] = useState(true);
   const [profileModal, setProfileModal] = useState<{ userId: string; userName: string } | null>(null);
   const [localRefresh, setLocalRefresh] = useState(0);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const handleDeletePost = async (postId: string) => {
+    if (!currentUserId || deletingId) return;
+    setDeletingId(postId);
+    // 낙관적 업데이트
+    setFeed((prev) => prev.filter((item) => item.id !== postId));
+    await fetch(`/api/posts?id=${postId}&user_id=${currentUserId}`, { method: "DELETE" });
+    setDeletingId(null);
+  };
 
   useEffect(() => {
     const fetchFeed = async () => {
@@ -433,6 +443,15 @@ export default function TodayFeed({
                   </div>
                 </button>
                 <div className="text-right flex items-center gap-1.5">
+                  {item.type === "post" && item.user_id === currentUserId && (
+                    <button
+                      onClick={() => handleDeletePost(item.id)}
+                      className="text-gray-300 hover:text-red-400 transition-colors text-xs px-1"
+                      title="삭제"
+                    >
+                      🗑️
+                    </button>
+                  )}
                   <span className="text-xs text-gray-400">{formatTime(item.checkin_time)}</span>
                   {item.type === "checkin" && (
                     <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
