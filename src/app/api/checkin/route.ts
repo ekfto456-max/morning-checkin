@@ -52,6 +52,72 @@ async function addSealExp(status: string, checkinHour: number, userId: string) {
   }
 }
 
+// 물개 피드 로그 삽입
+async function insertSealLog(
+  type: string,
+  emoji: string,
+  content: string,
+  userId?: string
+) {
+  try {
+    const insertData: { type: string; emoji: string; content: string; user_id?: string } = {
+      type,
+      emoji,
+      content,
+    };
+    if (userId) insertData.user_id = userId;
+    await supabase.from("seal_logs").insert(insertData);
+  } catch {
+    // silently fail - log is optional
+  }
+}
+
+// 출석 시간 기반 메시지 생성
+function getCheckinMessage(name: string, status: string, hour: number, penalty: number): { type: string; emoji: string; content: string } {
+  if (status === "on_time") {
+    if (hour < 7) {
+      return {
+        type: "checkin_ontime",
+        emoji: "✅",
+        content: `와!! ${name}님이 새벽부터 일어났어! 뭉치도 놀랐어 😲`,
+      };
+    } else if (hour < 8) {
+      return {
+        type: "checkin_ontime",
+        emoji: "✅",
+        content: `일찍 일어난 ${name}님! 물개도 기지개 켜는 중 🌅`,
+      };
+    } else if (hour < 9) {
+      return {
+        type: "checkin_ontime",
+        emoji: "✅",
+        content: `${name}님 굿모닝~ 오늘도 파이팅! 💪`,
+      };
+    } else {
+      return {
+        type: "checkin_ontime",
+        emoji: "✅",
+        content: `${name}님 정시 출석! 뭉치가 박수쳐줄게 👏`,
+      };
+    }
+  } else {
+    // late
+    if (penalty <= 2000) {
+      return {
+        type: "checkin_late",
+        emoji: "⏰",
+        content: `${name}님... 조금만 더 일찍 일어나지 😅 2,000원이야`,
+      };
+    } else {
+      return {
+        type: "checkin_late",
+        emoji: "⏰",
+        content: `${name}님 많이 늦었어... 뭉치 걱정했잖아 😢 5,000원`,
+      };
+    }
+  }
+}
+
 export async function POST(request: NextRequest) {
   const formData = await request.formData();
   const userId = formData.get("user_id") as string;
@@ -121,6 +187,15 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // 오늘 첫 출석자인지 확인 (insert 전)
+  const { count: todayCount } = await supabase
+    .from("checkins")
+    .select("id", { count: "exact", head: true })
+    .gte("checkin_time", startOfDay.toISOString())
+    .lt("checkin_time", endOfDay.toISOString());
+
+  const isFirstToday = (todayCount ?? 0) === 0;
+
   const fileExt = image.name.split(".").pop() || "jpg";
   const fileName = `${userId}/${Date.now()}.${fileExt}`;
   const arrayBuffer = await image.arrayBuffer();
@@ -164,6 +239,47 @@ export async function POST(request: NextRequest) {
 
   // 물개 EXP 지급
   await addSealExp(status, now.getHours(), userId);
+
+  // 유저 이름 조회
+  const { data: userData } = await supabase
+    .from("users")
+    .select("name")
+    .eq("id", userId)
+    .single();
+  const userName = userData?.name ?? "멤버";
+
+  // 출석 seal_log 삽입
+  const logInfo = getCheckinMessage(userName, status, now.getHours(), penalty);
+  await insertSealLog(logInfo.type, logInfo.emoji, logInfo.content, userId);
+
+  // 오늘 첫 출석자 로그
+  if (isFirstToday) {
+    await insertSealLog(
+      "first_today",
+      "🥇",
+      `오늘의 첫 출석자는 ${userName}님! 🥇 뭉치가 물고기 상 줄게 🐟`,
+      userId
+    );
+  }
+
+  // 전원 출석 여부 확인
+  const { count: memberCount } = await supabase
+    .from("users")
+    .select("id", { count: "exact", head: true });
+
+  const { count: checkinCount } = await supabase
+    .from("checkins")
+    .select("id", { count: "exact", head: true })
+    .gte("checkin_time", startOfDay.toISOString())
+    .lt("checkin_time", endOfDay.toISOString());
+
+  if (memberCount && checkinCount && checkinCount >= memberCount && memberCount > 0) {
+    await insertSealLog(
+      "all_present",
+      "🎉",
+      "🎉 오늘 전원 출석 완료! 뭉치 너무 행복해 ❤️ EXP +30 팀보너스!"
+    );
+  }
 
   return NextResponse.json(data);
 }

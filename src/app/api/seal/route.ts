@@ -42,6 +42,19 @@ function getTodayRange() {
   return { startOfDay, endOfDay };
 }
 
+// 먹이 메시지 생성
+function getFeedMessage(name: string): string {
+  const n = Math.floor(Math.random() * 9) + 2; // 2~10
+  const templates = [
+    `${name}님이 뭉치한테 물고기를 줬어요! 냠냠 🐟`,
+    `${name}님 최고야~ 밥 줘서 고마워 헤헤`,
+    `뭉치 오늘 ${name}님 덕분에 배불러요 😊`,
+    `${name}님이 먹이를 ${n}번째 줬어요! 진짜 최고 🏆`,
+    `물고기다!!!! ${name}님 사랑해요 🦭❤️`,
+  ];
+  return templates[Math.floor(Math.random() * templates.length)];
+}
+
 export async function GET() {
   // Mock 모드
   if (isUsingMockMode()) {
@@ -175,6 +188,26 @@ async function handleFeed(body: { user_id?: string }) {
     return NextResponse.json({ error: updateError.message }, { status: 500 });
   }
 
+  // 유저 이름 조회
+  const { data: userData } = await supabase
+    .from("users")
+    .select("name")
+    .eq("id", user_id)
+    .single();
+  const userName = userData?.name ?? "멤버";
+
+  // seal_log 삽입
+  try {
+    await supabase.from("seal_logs").insert({
+      type: "feed",
+      emoji: "🐟",
+      content: getFeedMessage(userName),
+      user_id,
+    });
+  } catch {
+    // silently fail
+  }
+
   return NextResponse.json({
     ...updated,
     level: newLevel,
@@ -243,3 +276,6 @@ async function handleAddExp(body: { amount?: number; reason?: string }) {
     reason,
   });
 }
+
+// suppress unused warning
+void getTodayRange;

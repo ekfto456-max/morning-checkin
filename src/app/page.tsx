@@ -11,6 +11,8 @@ import TodayFeed from "@/components/TodayFeed";
 import SealCard from "@/components/SealCard";
 import MemberBoard from "@/components/MemberBoard";
 import PenaltyFund from "@/components/PenaltyFund";
+import FloatingChat from "@/components/FloatingChat";
+import SealFeed from "@/components/SealFeed";
 
 type User = { id: string; name: string; batch?: string; purpose?: string };
 type Checkin = {
@@ -202,6 +204,9 @@ export default function Home() {
 
           {/* 리더보드 */}
           <Leaderboard refreshKey={refreshKey} />
+
+          {/* 물개 피드 */}
+          <SealFeed refreshKey={refreshKey} />
         </>
       ) : activeTab === "seal" ? (
         <>
@@ -225,6 +230,7 @@ export default function Home() {
           />
         </>
       )}
+      <FloatingChat userId={user.id} userName={user.name} />
     </main>
   );
 }
