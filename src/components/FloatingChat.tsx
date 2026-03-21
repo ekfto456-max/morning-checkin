@@ -106,7 +106,8 @@ export default function FloatingChat({ userId, userName }: Props) {
       {/* Floating Button */}
       <button
         onClick={() => setOpen((v) => !v)}
-        className="fixed bottom-6 right-4 z-50 w-14 h-14 rounded-full bg-zinc-800 border border-zinc-700 shadow-lg flex items-center justify-center text-2xl hover:bg-zinc-700 transition-colors"
+        className="fixed bottom-6 right-4 z-50 w-14 h-14 rounded-full shadow-xl flex items-center justify-center text-2xl transition-all active:scale-95"
+        style={{ background: "linear-gradient(135deg, #FF4757, #C0392B)", boxShadow: "0 4px 20px rgba(255,71,87,0.4)" }}
         aria-label="채팅 열기"
       >
         💬
@@ -131,21 +132,26 @@ export default function FloatingChat({ userId, userName }: Props) {
           open ? "translate-y-0" : "translate-y-full"
         }`}
         style={{
-          background: "#18181b",
+          background: "#ffffff",
           height: "75dvh",
           borderRadius: "20px 20px 0 0",
-          boxShadow: "0 -4px 30px rgba(0,0,0,0.5)",
+          boxShadow: "0 -4px 40px rgba(0,0,0,0.15)",
         }}
       >
+        {/* Handle bar */}
+        <div className="flex justify-center pt-3 pb-1">
+          <div className="w-10 h-1 bg-gray-200 rounded-full" />
+        </div>
+
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800 bg-zinc-900">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
           <div className="flex items-center gap-2">
             <span className="text-xl">💬</span>
-            <span className="font-semibold text-white">죽기스 채팅</span>
+            <span className="font-bold text-gray-900">죽기스 채팅</span>
           </div>
           <button
             onClick={() => setOpen(false)}
-            className="text-zinc-400 hover:text-white text-2xl leading-none transition-colors"
+            className="text-gray-400 hover:text-gray-700 text-2xl leading-none transition-colors w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100"
             aria-label="닫기"
           >
             ×
@@ -153,9 +159,9 @@ export default function FloatingChat({ userId, userName }: Props) {
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-3 py-4 space-y-3">
+        <div className="flex-1 overflow-y-auto px-3 py-4 space-y-3 bg-gray-50">
           {messages.length === 0 && (
-            <div className="text-center text-zinc-600 text-sm mt-8">
+            <div className="text-center text-gray-400 text-sm mt-8">
               아직 메시지가 없어요. 첫 메시지를 남겨보세요!
             </div>
           )}
@@ -167,7 +173,7 @@ export default function FloatingChat({ userId, userName }: Props) {
                 className={`flex ${isMe ? "justify-end" : "justify-start"} gap-2`}
               >
                 {!isMe && (
-                  <div className="w-8 h-8 rounded-full bg-zinc-700 flex items-center justify-center text-sm font-bold text-zinc-300 shrink-0 mt-1">
+                  <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-bold text-gray-600 shrink-0 mt-1">
                     {msg.user_name.charAt(0)}
                   </div>
                 )}
@@ -175,27 +181,28 @@ export default function FloatingChat({ userId, userName }: Props) {
                   className={`flex flex-col ${isMe ? "items-end" : "items-start"} max-w-[75%]`}
                 >
                   {!isMe && (
-                    <span className="text-xs text-zinc-500 mb-1 ml-1">
+                    <span className="text-xs text-gray-500 mb-1 ml-1">
                       {msg.user_name}
                     </span>
                   )}
                   <div className="flex items-end gap-1">
                     {isMe && (
-                      <span className="text-xs text-zinc-600 mb-0.5">
+                      <span className="text-xs text-gray-400 mb-0.5">
                         {formatTime(msg.created_at)}
                       </span>
                     )}
                     <div
                       className={`px-3 py-2 rounded-2xl text-sm leading-relaxed break-words ${
                         isMe
-                          ? "bg-red-600 text-white rounded-br-sm"
-                          : "bg-zinc-700 text-zinc-100 rounded-bl-sm"
+                          ? "text-white rounded-br-sm"
+                          : "bg-white text-gray-800 rounded-bl-sm shadow-sm border border-gray-100"
                       }`}
+                      style={isMe ? { background: "linear-gradient(135deg, #FF4757, #C0392B)" } : {}}
                     >
                       {msg.content}
                     </div>
                     {!isMe && (
-                      <span className="text-xs text-zinc-600 mb-0.5">
+                      <span className="text-xs text-gray-400 mb-0.5">
                         {formatTime(msg.created_at)}
                       </span>
                     )}
@@ -208,7 +215,7 @@ export default function FloatingChat({ userId, userName }: Props) {
         </div>
 
         {/* Input Bar */}
-        <div className="border-t border-zinc-800 bg-zinc-900 px-3 py-3 flex items-center gap-2">
+        <div className="border-t border-gray-100 bg-white px-3 py-3 flex items-center gap-2">
           <input
             ref={inputRef}
             type="text"
@@ -217,12 +224,13 @@ export default function FloatingChat({ userId, userName }: Props) {
             onKeyDown={handleKeyDown}
             placeholder="메시지 입력..."
             maxLength={500}
-            className="flex-1 bg-zinc-800 text-white text-sm rounded-full px-4 py-2 outline-none placeholder-zinc-500 border border-zinc-700 focus:border-zinc-500 transition-colors"
+            className="flex-1 bg-gray-50 text-gray-800 text-sm rounded-full px-4 py-2.5 outline-none placeholder-gray-400 border border-gray-200 focus:border-red-300 transition-colors"
           />
           <button
             onClick={handleSend}
             disabled={!input.trim() || sending}
-            className="w-10 h-10 rounded-full bg-red-600 text-white text-lg flex items-center justify-center disabled:opacity-40 hover:bg-red-500 transition-colors shrink-0"
+            className="w-10 h-10 rounded-full text-white text-lg flex items-center justify-center disabled:opacity-40 transition-all shrink-0 active:scale-95"
+            style={{ background: "linear-gradient(135deg, #FF4757, #C0392B)" }}
             aria-label="전송"
           >
             ➤

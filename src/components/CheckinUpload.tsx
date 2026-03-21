@@ -32,10 +32,8 @@ export default function CheckinUpload({
   };
 
   const getSelectedFile = (): File | null => {
-    // 카메라 입력에서 먼저 확인
     const cameraFile = cameraRef.current?.files?.[0];
     if (cameraFile) return cameraFile;
-    // 갤러리 입력 확인
     const galleryFile = fileRef.current?.files?.[0];
     if (galleryFile) return galleryFile;
     return null;
@@ -84,19 +82,17 @@ export default function CheckinUpload({
 
   return (
     <div className="card space-y-4">
-      <h2 className="text-lg font-semibold flex items-center gap-2">
-        <span>{"\uD83D\uDCF8"}</span>
-        <span>{"\uCD9C\uC11D \uC778\uC99D"}</span>
+      <h2 className="text-lg font-bold flex items-center gap-2 text-gray-900">
+        <span>📸</span>
+        <span>출석 인증</span>
       </h2>
 
       <div className="space-y-3">
-        {/* 카메라 촬영 버튼 */}
+        {/* 카메라 / 갤러리 */}
         <div className="grid grid-cols-2 gap-3">
-          <label className="flex items-center justify-center gap-2 py-3 bg-zinc-800 border border-zinc-700 rounded-xl cursor-pointer hover:bg-zinc-700 transition-colors">
-            <span>{"\uD83D\uDCF7"}</span>
-            <span className="text-sm font-medium">
-              {"\uCE74\uBA54\uB77C"}
-            </span>
+          <label className="flex items-center justify-center gap-2 py-3.5 bg-gray-50 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors">
+            <span>📷</span>
+            <span className="text-sm font-semibold text-gray-700">카메라</span>
             <input
               ref={cameraRef}
               type="file"
@@ -106,11 +102,9 @@ export default function CheckinUpload({
               className="hidden"
             />
           </label>
-          <label className="flex items-center justify-center gap-2 py-3 bg-zinc-800 border border-zinc-700 rounded-xl cursor-pointer hover:bg-zinc-700 transition-colors">
-            <span>{"\uD83D\uDDBC\uFE0F"}</span>
-            <span className="text-sm font-medium">
-              {"\uAC24\uB7EC\uB9AC"}
-            </span>
+          <label className="flex items-center justify-center gap-2 py-3.5 bg-gray-50 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors">
+            <span>🖼️</span>
+            <span className="text-sm font-semibold text-gray-700">갤러리</span>
             <input
               ref={fileRef}
               type="file"
@@ -126,7 +120,7 @@ export default function CheckinUpload({
           <img
             src={preview}
             alt="미리보기"
-            className="w-full max-h-48 object-cover rounded-xl border border-zinc-700"
+            className="w-full max-h-48 object-cover rounded-xl border border-gray-200"
           />
         )}
 
@@ -134,15 +128,23 @@ export default function CheckinUpload({
         <button
           onClick={handleUpload}
           disabled={loading || !preview}
-          className="w-full py-3 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          className="w-full py-3.5 rounded-xl font-bold text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-95"
+          style={{
+            background: preview && !loading
+              ? "linear-gradient(135deg, #FF4757, #C0392B)"
+              : undefined,
+            backgroundColor: (!preview || loading) ? "#e5e7eb" : undefined,
+          }}
         >
-          {loading
-            ? "\uC5C5\uB85C\uB4DC \uC911..."
-            : "\uCD9C\uC11D\uD558\uAE30"}
+          {loading ? "업로드 중..." : "출석하기 💀"}
         </button>
       </div>
 
-      {error && <p className="text-red-400 text-sm">{error}</p>}
+      {error && (
+        <p className="text-red-500 text-sm bg-red-50 border border-red-100 rounded-xl px-3 py-2">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

@@ -41,12 +41,12 @@ function LogItem({ log, index }: { log: SealLog; index: number }) {
         visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
       }`}
     >
-      <div className="w-10 h-10 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-xl shrink-0">
+      <div className="w-9 h-9 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-lg shrink-0">
         {log.emoji}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-zinc-200 leading-relaxed">{log.content}</p>
-        <p className="text-xs text-zinc-600 mt-0.5">{timeAgo(log.created_at)}</p>
+        <p className="text-sm text-gray-700 leading-relaxed">{log.content}</p>
+        <p className="text-xs text-gray-400 mt-0.5">{timeAgo(log.created_at)}</p>
       </div>
     </div>
   );
@@ -83,7 +83,7 @@ export default function SealFeed({ refreshKey }: Props) {
   if (loading) {
     return (
       <div className="card">
-        <div className="text-center text-zinc-600 text-sm py-4">
+        <div className="text-center text-gray-400 text-sm py-4">
           뭉치 소식 불러오는 중...
         </div>
       </div>
@@ -94,11 +94,11 @@ export default function SealFeed({ refreshKey }: Props) {
     <div className="card space-y-4">
       <div className="flex items-center gap-2">
         <span className="text-xl">🦭</span>
-        <h2 className="font-semibold text-white">뭉치 소식</h2>
+        <h2 className="font-bold text-gray-900">뭉치 소식</h2>
       </div>
 
       {logs.length === 0 ? (
-        <div className="text-center text-zinc-600 text-sm py-6">
+        <div className="text-center text-gray-400 text-sm py-6 bg-gray-50 rounded-xl">
           아직 소식이 없어요. 출석하면 뭉치가 반응해요!
         </div>
       ) : (

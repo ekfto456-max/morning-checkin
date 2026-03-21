@@ -103,10 +103,10 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen bg-[#F2F4F8]">
         <div className="text-center">
           <p className="text-4xl mb-4">💀</p>
-          <p className="text-zinc-500">로딩 중...</p>
+          <p className="text-gray-400">로딩 중...</p>
         </div>
       </div>
     );
@@ -121,45 +121,52 @@ export default function Home() {
   return (
     <main className="max-w-lg mx-auto px-4 py-6 pb-24 space-y-5">
       {/* 헤더 */}
-      <header className="flex items-center justify-between">
+      <header className="flex items-center justify-between pt-2">
         <div>
-          <h1 className="text-xl font-bold flex items-center gap-2">
+          <h1 className="text-xl font-bold flex items-center gap-2 text-gray-900">
             <span>💀</span>
             <span>죽기스</span>
           </h1>
-          <p className="text-sm text-zinc-500">
+          <p className="text-sm text-gray-400 mt-0.5">
             안녕하세요,{" "}
-            <span className="font-medium text-zinc-300">{user.name}</span>님
+            <span className="font-semibold text-gray-700">{user.name}</span>님
             {user.batch && (
-              <span className="text-zinc-600 ml-1">({user.batch})</span>
+              <span className="text-gray-400 ml-1">({user.batch})</span>
             )}
           </p>
         </div>
         <button
           onClick={handleLogout}
-          className="text-sm text-zinc-600 hover:text-zinc-400 transition-colors"
+          className="text-sm text-gray-400 hover:text-gray-600 transition-colors bg-white border border-gray-200 px-3 py-1.5 rounded-xl shadow-sm"
         >
           로그아웃
         </button>
       </header>
 
-      {/* 실시간 시계 + 마감 */}
-      <div className="card text-center space-y-2">
-        <div className="text-5xl font-mono font-bold tracking-wider">
+      {/* 실시간 시계 + 마감 — 히어로 카드 */}
+      <div
+        className="rounded-2xl p-6 text-center space-y-2"
+        style={{
+          background: "linear-gradient(135deg, #FF4757 0%, #C0392B 100%)",
+          boxShadow: "0 8px 32px rgba(255, 71, 87, 0.28)",
+        }}
+      >
+        <div className="text-5xl font-mono font-bold tracking-wider text-white">
           <span>{clock.h}</span>
-          <span className="clock-colon">:</span>
+          <span className="clock-colon" style={{ opacity: 0.6 }}>:</span>
           <span>{clock.m}</span>
-          <span className="clock-colon">:</span>
-          <span className="text-3xl text-zinc-500">{clock.s}</span>
+          <span className="clock-colon" style={{ opacity: 0.6 }}>:</span>
+          <span className="text-3xl" style={{ opacity: 0.5 }}>{clock.s}</span>
         </div>
-        <p className="text-sm text-zinc-500">
-          마감:{" "}
-          <span className="text-red-500 font-semibold">오전 10:04</span>
+        <p className="text-sm text-white/70">
+          마감{" "}
+          <span className="text-white font-bold">오전 10:04</span>
+          {" "}까지 출석하세요
         </p>
       </div>
 
       {/* 탭 네비게이션 */}
-      <div className="grid grid-cols-5 bg-zinc-800/50 rounded-xl p-1 gap-1">
+      <div className="bg-white rounded-2xl p-1.5 shadow-sm border border-gray-100 grid grid-cols-5 gap-1">
         {[
           { id: "home", label: "🏠", sub: "홈" },
           { id: "seal", label: "🦭", sub: "물개" },
@@ -170,11 +177,14 @@ export default function Home() {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as typeof activeTab)}
-            className={`flex flex-col items-center py-2 rounded-lg text-xs font-medium transition-colors gap-0.5 ${
+            className={`flex flex-col items-center py-2 rounded-xl text-xs font-medium transition-all gap-0.5 ${
               activeTab === tab.id
-                ? "bg-zinc-700 text-white"
-                : "text-zinc-400 hover:text-zinc-300"
+                ? "text-white shadow-sm"
+                : "text-gray-400 hover:text-gray-600"
             }`}
+            style={activeTab === tab.id ? {
+              background: "linear-gradient(135deg, #FF4757, #C0392B)",
+            } : {}}
           >
             <span className="text-base">{tab.label}</span>
             <span>{tab.sub}</span>

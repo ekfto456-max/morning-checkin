@@ -31,52 +31,49 @@ export default function Leaderboard({ refreshKey }: { refreshKey: number }) {
   }, [refreshKey]);
 
   const getRank = (index: number) => {
-    if (index === 0) return "\uD83E\uDD47";
-    if (index === 1) return "\uD83E\uDD48";
-    if (index === 2) return "\uD83E\uDD49";
+    if (index === 0) return "🥇";
+    if (index === 1) return "🥈";
+    if (index === 2) return "🥉";
     return `${index + 1}.`;
   };
 
   return (
     <div className="card">
-      <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-        <span>{"\uD83C\uDFC6"}</span>
-        <span>{"\uB9AC\uB354\uBCF4\uB4DC"}</span>
-        <span className="text-xs text-zinc-500 font-normal ml-1">
-          {"\uBC8C\uAE08 \uC801\uC740 \uC21C"}
+      <h2 className="text-lg font-bold mb-4 flex items-center gap-2 text-gray-900">
+        <span>🏆</span>
+        <span>리더보드</span>
+        <span className="text-xs text-gray-400 font-normal ml-1 bg-gray-100 px-2 py-0.5 rounded-full">
+          벌금 적은 순
         </span>
       </h2>
 
       {loading ? (
-        <p className="text-zinc-600 text-center py-4">
-          {"\uB85C\uB529 \uC911..."}
-        </p>
+        <p className="text-gray-400 text-center py-4 text-sm">로딩 중...</p>
       ) : entries.length === 0 ? (
-        <p className="text-zinc-600 text-center py-4">
-          {"\uC544\uC9C1 \uCC38\uAC00\uC790\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4"}
-        </p>
+        <p className="text-gray-400 text-center py-4 text-sm">아직 참가자가 없습니다</p>
       ) : (
         <div className="space-y-1">
           {entries.map((entry, i) => (
             <div
               key={entry.id}
-              className={`flex items-center justify-between py-2.5 px-3 rounded-xl ${
+              className={`flex items-center justify-between py-2.5 px-3 rounded-xl transition-colors ${
                 i === 0
-                  ? "bg-yellow-900/20 border border-yellow-800/30"
-                  : "hover:bg-zinc-800/50"
+                  ? "bg-amber-50 border border-amber-200"
+                  : "hover:bg-gray-50"
               }`}
             >
               <div className="flex items-center gap-3">
                 <span className="text-lg w-8 text-center">{getRank(i)}</span>
-                <span className="font-medium">{entry.name}</span>
+                <span className={`font-medium ${i === 0 ? "text-gray-900" : "text-gray-700"}`}>
+                  {entry.name}
+                </span>
               </div>
               <span
-                className={`font-mono font-bold ${
-                  entry.totalPenalty === 0 ? "text-green-400" : "text-red-400"
+                className={`font-mono font-bold text-sm ${
+                  entry.totalPenalty === 0 ? "text-green-500" : "text-red-500"
                 }`}
               >
-                {entry.totalPenalty.toLocaleString()}
-                {"\uC6D0"}
+                {entry.totalPenalty === 0 ? "✨ 0원" : `${entry.totalPenalty.toLocaleString()}원`}
               </span>
             </div>
           ))}

@@ -83,10 +83,10 @@ function CommentSection({
   };
 
   return (
-    <div className="mt-2 border-t border-zinc-700/40 pt-2">
+    <div className="mt-2 border-t border-gray-100 pt-2">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+        className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 transition-colors"
       >
         <span>💬</span>
         <span>
@@ -98,24 +98,23 @@ function CommentSection({
 
       {open && (
         <div className="mt-2 space-y-2">
-          {/* 댓글 목록 */}
           {loading ? (
-            <p className="text-xs text-zinc-600 text-center py-1">불러오는 중...</p>
+            <p className="text-xs text-gray-400 text-center py-1">불러오는 중...</p>
           ) : comments.length === 0 ? (
-            <p className="text-xs text-zinc-600 text-center py-1">첫 댓글을 달아봐요! 🦭</p>
+            <p className="text-xs text-gray-400 text-center py-1">첫 댓글을 달아봐요! 🦭</p>
           ) : (
             <div className="space-y-2">
               {comments.map((c) => (
                 <div key={c.id} className="flex gap-2 items-start">
-                  <div className="w-6 h-6 rounded-full bg-zinc-700 flex items-center justify-center text-xs shrink-0 mt-0.5 font-medium">
+                  <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs shrink-0 mt-0.5 font-semibold text-gray-600">
                     {c.user_name.charAt(0)}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-baseline gap-1.5">
-                      <span className="text-xs font-semibold text-zinc-300">{c.user_name}</span>
-                      <span className="text-[10px] text-zinc-600">{formatTime(c.created_at)}</span>
+                      <span className="text-xs font-semibold text-gray-700">{c.user_name}</span>
+                      <span className="text-[10px] text-gray-400">{formatTime(c.created_at)}</span>
                     </div>
-                    <p className="text-xs text-zinc-400 break-words leading-relaxed">{c.content}</p>
+                    <p className="text-xs text-gray-600 break-words leading-relaxed">{c.content}</p>
                   </div>
                 </div>
               ))}
@@ -128,7 +127,7 @@ function CommentSection({
               <button
                 key={r}
                 onClick={() => postComment(r)}
-                className="text-xs bg-zinc-800 hover:bg-zinc-700 active:scale-95 border border-zinc-700 rounded-full px-2.5 py-0.5 transition-all"
+                className="text-xs bg-gray-100 hover:bg-gray-200 active:scale-95 border border-gray-200 rounded-full px-2.5 py-0.5 transition-all text-gray-600"
               >
                 {r}
               </button>
@@ -142,13 +141,13 @@ function CommentSection({
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="댓글 입력..."
-              className="flex-1 bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-1.5 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-500 transition-colors"
+              className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-3 py-1.5 text-xs text-gray-700 placeholder-gray-400 focus:outline-none focus:border-red-300 transition-colors"
               maxLength={100}
             />
             <button
               type="submit"
               disabled={!input.trim() || submitting}
-              className="text-xs bg-red-900/80 hover:bg-red-800 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl px-3 py-1.5 font-semibold transition-colors"
+              className="text-xs bg-red-500 hover:bg-red-600 text-white disabled:opacity-40 disabled:cursor-not-allowed rounded-xl px-3 py-1.5 font-semibold transition-colors"
             >
               {submitting ? "..." : "전송"}
             </button>
@@ -183,7 +182,6 @@ export default function TodayFeed({
       }
     };
     fetchFeed();
-    // 5초마다 자동 폴링
     const interval = setInterval(fetchFeed, 5000);
     return () => clearInterval(interval);
   }, [refreshKey]);
@@ -200,47 +198,50 @@ export default function TodayFeed({
   if (loading) {
     return (
       <div className="card">
-        <h2 className="text-lg font-semibold flex items-center gap-2 mb-3">
+        <h2 className="text-lg font-bold flex items-center gap-2 mb-3 text-gray-900">
           <span>📸</span><span>오늘의 인증</span>
         </h2>
-        <p className="text-zinc-500 text-center py-4">로딩 중...</p>
+        <p className="text-gray-400 text-center py-4 text-sm">로딩 중...</p>
       </div>
     );
   }
 
   return (
     <div className="card space-y-4">
-      <h2 className="text-lg font-semibold flex items-center gap-2">
+      <h2 className="text-lg font-bold flex items-center gap-2 text-gray-900">
         <span>📸</span>
         <span>오늘의 인증</span>
         {feed.length > 0 && (
-          <span className="text-xs bg-zinc-700 px-2 py-0.5 rounded-full text-zinc-300">
+          <span className="text-xs bg-red-50 text-red-500 border border-red-100 px-2 py-0.5 rounded-full font-semibold">
             {feed.length}명
           </span>
         )}
       </h2>
 
       {feed.length === 0 ? (
-        <p className="text-zinc-500 text-center py-6">아직 아무도 인증하지 않았습니다 😴</p>
+        <div className="bg-gray-50 rounded-xl py-8 text-center">
+          <p className="text-2xl mb-2">😴</p>
+          <p className="text-gray-400 text-sm">아직 아무도 인증하지 않았습니다</p>
+        </div>
       ) : (
         <div className="space-y-3">
           {feed.map((item) => (
-            <div key={item.id} className="bg-zinc-800/50 rounded-xl p-3 border border-zinc-700/50">
+            <div key={item.id} className="bg-gray-50 rounded-xl p-3 border border-gray-100">
               {/* 헤더 */}
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-zinc-700 flex items-center justify-center text-sm font-medium">
+                  <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold text-gray-600">
                     {item.type === "exemption" ? "🎫" : item.user_name.charAt(0)}
                   </div>
-                  <span className="font-medium text-zinc-200">{item.user_name}</span>
+                  <span className="font-semibold text-gray-800">{item.user_name}</span>
                 </div>
-                <div className="text-right">
-                  <span className="text-xs text-zinc-500">{formatTime(item.checkin_time)}</span>
+                <div className="text-right flex items-center gap-1.5">
+                  <span className="text-xs text-gray-400">{formatTime(item.checkin_time)}</span>
                   {item.type === "checkin" && (
-                    <span className={`ml-2 text-xs px-1.5 py-0.5 rounded ${
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
                       item.status === "on_time"
-                        ? "bg-green-900/50 text-green-400"
-                        : "bg-red-900/50 text-red-400"
+                        ? "bg-green-50 text-green-600 border border-green-200"
+                        : "bg-red-50 text-red-500 border border-red-200"
                     }`}>
                       {item.status === "on_time" ? "정시" : `₩${(item.penalty || 0).toLocaleString()}`}
                     </span>
@@ -250,9 +251,9 @@ export default function TodayFeed({
 
               {/* 인증샷 */}
               {item.type === "checkin" && item.image_url && (
-                <div className="rounded-lg overflow-hidden">
+                <div className="rounded-xl overflow-hidden">
                   <img src={item.image_url} alt="인증샷" className="w-full h-48 object-cover" />
-                  <div className="bg-black/70 px-3 py-1.5 text-xs text-zinc-300">
+                  <div className="bg-black/60 px-3 py-1.5 text-xs text-white/80">
                     {new Date(item.checkin_time).toLocaleString("ko-KR", {
                       year: "numeric", month: "long", day: "numeric",
                       weekday: "short", hour: "2-digit", minute: "2-digit",
@@ -263,10 +264,10 @@ export default function TodayFeed({
 
               {/* 면제권 */}
               {item.type === "exemption" && (
-                <div className="bg-yellow-900/20 border border-yellow-700/30 rounded-lg p-4 text-center">
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-center">
                   <p className="text-3xl mb-1">🎫</p>
-                  <p className="text-yellow-400 font-semibold">면제권 사용</p>
-                  {item.reason && <p className="text-zinc-400 text-xs mt-1">{item.reason}</p>}
+                  <p className="text-amber-600 font-semibold">면제권 사용</p>
+                  {item.reason && <p className="text-gray-500 text-xs mt-1">{item.reason}</p>}
                 </div>
               )}
 
