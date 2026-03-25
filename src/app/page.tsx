@@ -32,6 +32,12 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [activeTab, setActiveTab] = useState<"home" | "seal" | "calendar" | "members" | "fund" | "my">("home");
+  const [visitedTabs, setVisitedTabs] = useState<Set<string>>(new Set(["home"]));
+
+  const switchTab = (tab: typeof activeTab) => {
+    setActiveTab(tab);
+    setVisitedTabs((prev) => { const next = new Set(prev); next.add(tab); return next; });
+  };
 
   // 실시간 시계
   useEffect(() => {
@@ -96,10 +102,14 @@ export default function Home() {
   };
 
   const formatClock = (date: Date) => {
-    const h = date.getHours().toString().padStart(2, "0");
-    const m = date.getMinutes().toString().padStart(2, "0");
-    const s = date.getSeconds().toString().padStart(2, "0");
-    return { h, m, s };
+    const dayNames = ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"];
+    const day = dayNames[date.getDay()];
+    const rawH = date.getHours();
+    const ampm = rawH < 12 ? "오전" : "오후";
+    const h12 = rawH === 0 ? 12 : rawH > 12 ? rawH - 12 : rawH;
+    const m = String(date.getMinutes()).padStart(2, "0");
+    const s = String(date.getSeconds()).padStart(2, "0");
+    return { day, ampm, h: h12, m, s };
   };
 
   if (loading) {
@@ -162,8 +172,8 @@ export default function Home() {
           <p className="text-sm text-gray-400 mt-0.5">
             안녕하세요,{" "}
             <span className="font-semibold text-gray-700">{user.name}</span>님
-            {user.batch && (
-              <span className="text-gray-400 ml-1">({user.batch})</span>
+            {user.batch && /^\d{1,2}:\d{2}$/.test(user.batch) && (
+              <span className="text-gray-400 ml-1">(⏰ {user.batch})</span>
             )}
           </p>
         </div>
@@ -176,23 +186,96 @@ export default function Home() {
       </header>
 
       {/* 실시간 시계 + 마감 — 히어로 카드 */}
+      <style>{`
+        @keyframes seal-float {
+          0%, 100% { transform: translateY(0px) rotate(-3deg); }
+          50% { transform: translateY(-12px) rotate(3deg); }
+        }
+        @keyframes wave1 {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+        @keyframes wave2 {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+        @keyframes bubble {
+          0% { transform: translateY(0) scale(1); opacity: 0.6; }
+          100% { transform: translateY(-80px) scale(0.5); opacity: 0; }
+        }
+        @keyframes star-twinkle {
+          0%, 100% { opacity: 0.2; transform: scale(0.8); }
+          50% { opacity: 1; transform: scale(1.2); }
+        }
+        .seal-float { animation: seal-float 3s ease-in-out infinite; }
+        .wave1 { animation: wave1 4s linear infinite; }
+        .wave2 { animation: wave2 6s linear infinite; }
+        .bubble1 { animation: bubble 3s ease-out infinite; }
+        .bubble2 { animation: bubble 4s ease-out 1s infinite; }
+        .bubble3 { animation: bubble 3.5s ease-out 0.5s infinite; }
+        .star1 { animation: star-twinkle 2s ease-in-out infinite; }
+        .star2 { animation: star-twinkle 2.5s ease-in-out 0.5s infinite; }
+        .star3 { animation: star-twinkle 1.8s ease-in-out 1s infinite; }
+        .clock-colon { animation: clock-blink 1s step-end infinite; }
+        @keyframes clock-blink { 0%, 100% { opacity: 0.6; } 50% { opacity: 0.15; } }
+      `}</style>
+
       <div
-        className="rounded-2xl p-6 text-center space-y-2"
+        className="rounded-2xl overflow-hidden relative"
         style={{
-          background: "linear-gradient(135deg, #FF4757 0%, #C0392B 100%)",
-          boxShadow: "0 8px 32px rgba(255, 71, 87, 0.28)",
+          background: "linear-gradient(160deg, #1a0a2e 0%, #2d1044 40%, #C0392B 100%)",
+          boxShadow: "0 8px 32px rgba(255, 71, 87, 0.35)",
+          minHeight: "200px",
         }}
       >
-        <div className="text-5xl font-mono font-bold tracking-wider text-white">
-          <span>{clock.h}</span>
-          <span className="clock-colon" style={{ opacity: 0.6 }}>:</span>
-          <span>{clock.m}</span>
-          <span className="clock-colon" style={{ opacity: 0.6 }}>:</span>
-          <span className="text-3xl" style={{ opacity: 0.5 }}>{clock.s}</span>
+        {/* 별 장식 */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <span className="star1 absolute text-white text-xs" style={{ top: "14%", left: "10%" }}>✦</span>
+          <span className="star2 absolute text-white text-sm" style={{ top: "20%", left: "80%" }}>✦</span>
+          <span className="star3 absolute text-white text-xs" style={{ top: "10%", left: "55%" }}>✦</span>
+          <span className="star1 absolute text-white/50 text-xs" style={{ top: "35%", left: "25%" }}>·</span>
+          <span className="star2 absolute text-white/50 text-xs" style={{ top: "30%", left: "70%" }}>·</span>
         </div>
-        <p className="text-sm text-white/70">
-          {getNextDeadlineLabel()}
-        </p>
+
+        {/* 뭉치 + 텍스트 */}
+        <div className="relative z-10 pt-7 pb-3 px-6 text-center">
+          {/* 뭉치 이모지 */}
+          <div className="seal-float inline-block mb-2 select-none" style={{ filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.4))" }}>
+            <span style={{ fontSize: "72px", lineHeight: 1 }}>🦭</span>
+          </div>
+
+          {/* 기포 */}
+          <div className="absolute pointer-events-none" style={{ top: "18%", left: "30%" }}>
+            <span className="bubble1 absolute text-white/40 text-xs">●</span>
+            <span className="bubble2 absolute text-white/30 text-[8px]" style={{ left: "20px" }}>●</span>
+            <span className="bubble3 absolute text-white/20 text-[6px]" style={{ left: "-10px", top: "5px" }}>●</span>
+          </div>
+
+          {/* 시계 */}
+          <p className="text-white/50 text-sm font-medium mb-1 tracking-wide">{clock.day}</p>
+          <div className="text-4xl font-bold text-white mb-0.5">
+            <span className="text-2xl" style={{ opacity: 0.7 }}>{clock.ampm} </span>
+            <span>{clock.h}시 {clock.m}분</span>
+            <span className="text-xl ml-1.5" style={{ opacity: 0.4 }}>{clock.s}초</span>
+          </div>
+          <p className="text-sm text-white/65 mt-1">{getNextDeadlineLabel()}</p>
+        </div>
+
+        {/* 물결 */}
+        <div className="relative overflow-hidden" style={{ height: "36px" }}>
+          <div className="wave1 absolute bottom-0" style={{ width: "200%", height: "36px" }}>
+            <svg viewBox="0 0 800 36" preserveAspectRatio="none" style={{ width: "100%", height: "100%" }}>
+              <path d="M0,18 C100,0 200,36 300,18 C400,0 500,36 600,18 C700,0 800,36 800,18 L800,36 L0,36 Z"
+                fill="rgba(255,255,255,0.07)" />
+            </svg>
+          </div>
+          <div className="wave2 absolute bottom-0" style={{ width: "200%", height: "28px" }}>
+            <svg viewBox="0 0 800 28" preserveAspectRatio="none" style={{ width: "100%", height: "100%" }}>
+              <path d="M0,14 C120,0 240,28 360,14 C480,0 600,28 720,14 C780,7 800,14 800,14 L800,28 L0,28 Z"
+                fill="rgba(255,255,255,0.05)" />
+            </svg>
+          </div>
+        </div>
       </div>
 
       {/* 탭 네비게이션 */}
@@ -207,7 +290,7 @@ export default function Home() {
         ].map((tab) => (
           <button
             key={tab.id}
-            onClick={() => setActiveTab(tab.id as typeof activeTab)}
+            onClick={() => switchTab(tab.id as typeof activeTab)}
             className={`flex flex-col items-center py-2 rounded-xl text-xs font-medium transition-all gap-0.5 ${
               activeTab === tab.id
                 ? "text-white shadow-sm"
@@ -223,60 +306,67 @@ export default function Home() {
         ))}
       </div>
 
-      {activeTab === "home" ? (
-        <>
-          {/* 오늘의 상태 */}
-          <StatusCard checkin={todayCheckin} totalPenalty={totalPenalty} />
+      {/* 홈 탭 */}
+      <div className={activeTab === "home" ? "space-y-5" : "hidden"}>
+        <StatusCard checkin={todayCheckin} totalPenalty={totalPenalty} />
+        {!todayCheckin && (
+          <>
+            <CheckinUpload userId={user.id} onCheckin={handleCheckin} />
+            <ExemptionCard
+              userId={user.id}
+              hasCheckedInToday={false}
+              onExemptionUsed={handleExemptionUsed}
+            />
+          </>
+        )}
+        <TodayFeed refreshKey={refreshKey} currentUserId={user.id} currentUserName={user.name} currentUserAvatarUrl={user.avatar_url} />
+        <Leaderboard refreshKey={refreshKey} />
+        <SealFeed refreshKey={refreshKey} />
+      </div>
 
-          {/* 출석 인증 or 면제권 (아직 안 했으면) */}
-          {!todayCheckin && (
-            <>
-              <CheckinUpload userId={user.id} onCheckin={handleCheckin} />
-              <ExemptionCard
-                userId={user.id}
-                hasCheckedInToday={false}
-                onExemptionUsed={handleExemptionUsed}
-              />
-            </>
-          )}
-
-          {/* 오늘의 인증 피드 (단톡방처럼) */}
-          <TodayFeed refreshKey={refreshKey} currentUserId={user.id} currentUserName={user.name} currentUserAvatarUrl={user.avatar_url} />
-
-          {/* 리더보드 */}
-          <Leaderboard refreshKey={refreshKey} />
-
-          {/* 물개 피드 */}
-          <SealFeed refreshKey={refreshKey} />
-        </>
-      ) : activeTab === "seal" ? (
-        <>
-          {/* 물개 카드 */}
+      {/* 물개 탭 — 처음 방문 후 유지 */}
+      {visitedTabs.has("seal") && (
+        <div className={activeTab === "seal" ? "" : "hidden"}>
           <SealCard userId={user.id} customDeadlineTime={user.custom_deadline_time} />
-        </>
-      ) : activeTab === "fund" ? (
-        <PenaltyFund userId={user.id} userName={user.name} />
-      ) : activeTab === "members" ? (
-        <MemberBoard refreshKey={refreshKey} />
-      ) : activeTab === "my" ? (
-        <ProfileCard
-          user={user}
-          onUpdate={(updated) => {
-            setUser(updated);
-          }}
-        />
-      ) : (
-        <>
-          {/* 출석 캘린더 */}
-          <AttendanceCalendar userId={user.id} />
+        </div>
+      )}
 
-          {/* 면제권 현황 */}
+      {/* 벌금통 탭 */}
+      {visitedTabs.has("fund") && (
+        <div className={activeTab === "fund" ? "" : "hidden"}>
+          <PenaltyFund userId={user.id} userName={user.name} />
+        </div>
+      )}
+
+      {/* 현황 탭 */}
+      {visitedTabs.has("members") && (
+        <div className={activeTab === "members" ? "" : "hidden"}>
+          <MemberBoard refreshKey={refreshKey} />
+        </div>
+      )}
+
+      {/* MY 탭 */}
+      {visitedTabs.has("my") && (
+        <div className={activeTab === "my" ? "" : "hidden"}>
+          <ProfileCard
+            user={user}
+            onUpdate={(updated) => {
+              setUser(updated);
+            }}
+          />
+        </div>
+      )}
+
+      {/* 캘린더 탭 */}
+      {visitedTabs.has("calendar") && (
+        <div className={activeTab === "calendar" ? "space-y-5" : "hidden"}>
+          <AttendanceCalendar userId={user.id} />
           <ExemptionCard
             userId={user.id}
             hasCheckedInToday={!!todayCheckin}
             onExemptionUsed={handleExemptionUsed}
           />
-        </>
+        </div>
       )}
       <FloatingChat userId={user.id} userName={user.name} />
     </main>

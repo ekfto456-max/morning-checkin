@@ -23,7 +23,7 @@ export default function ProfileCard({
 }) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(user.name);
-  const [batch, setBatch] = useState(user.batch || "");
+  const [wakeTime, setWakeTime] = useState(user.batch || "");
   const [purpose, setPurpose] = useState(user.purpose || "");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -46,7 +46,7 @@ export default function ProfileCard({
       const res = await fetch("/api/users", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: user.id, name, batch, purpose }),
+        body: JSON.stringify({ id: user.id, name, batch: wakeTime, purpose }),
       });
       if (!res.ok) throw new Error();
       const updated = await res.json();
@@ -62,10 +62,25 @@ export default function ProfileCard({
     }
   };
 
-  const handleAvatarSelect = (emoji: string) => {
+  const handleAvatarSelect = async (emoji: string) => {
     setAvatar(emoji);
     localStorage.setItem(AVATAR_STORAGE_KEY, emoji);
     setShowAvatarPicker(false);
+    // DB에도 저장
+    try {
+      const res = await fetch("/api/users", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: user.id, avatar_url: emoji }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        localStorage.setItem("checkin_user", JSON.stringify(updated));
+        onUpdate(updated);
+      }
+    } catch {
+      // silently fail
+    }
   };
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -312,7 +327,7 @@ export default function ProfileCard({
 
           <div className="text-center">
             <p className="text-xl font-bold text-gray-900">{user.name}</p>
-            {user.batch && <p className="text-sm text-gray-400">{user.batch}</p>}
+            {user.batch && <p className="text-sm text-gray-400">⏰ {user.batch}</p>}
           </div>
         </div>
 
@@ -320,7 +335,7 @@ export default function ProfileCard({
         {!editing ? (
           <div className="space-y-3">
             <InfoRow icon="👤" label="이름" value={user.name} />
-            <InfoRow icon="📋" label="기수" value={user.batch || "미설정"} />
+            <InfoRow icon="⏰" label="목표 기상 시간" value={user.batch || "미설정"} />
             <InfoRow icon="🎯" label="기상 목적" value={user.purpose || "미설정"} />
 
             <button
@@ -342,12 +357,12 @@ export default function ProfileCard({
               />
             </div>
             <div>
-              <label className="text-xs text-gray-400 mb-1 block ml-1">📋 기수</label>
+              <label className="text-xs text-gray-400 mb-1 block ml-1">⏰ 목표 기상 시간</label>
               <input
-                value={batch}
-                onChange={(e) => setBatch(e.target.value)}
+                type="time"
+                value={wakeTime}
+                onChange={(e) => setWakeTime(e.target.value)}
                 className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-800 text-sm focus:outline-none focus:border-red-300"
-                placeholder="예: 11기"
               />
             </div>
             <div>
@@ -364,7 +379,7 @@ export default function ProfileCard({
                 onClick={() => {
                   setEditing(false);
                   setName(user.name);
-                  setBatch(user.batch || "");
+                  setWakeTime(user.batch || "");
                   setPurpose(user.purpose || "");
                 }}
                 className="py-3 rounded-xl text-sm border border-gray-200 text-gray-500 hover:bg-gray-50"

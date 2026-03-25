@@ -8,6 +8,8 @@ import {
   generateId,
 } from "@/lib/mock-store";
 
+export const dynamic = "force-dynamic";
+
 // 레벨 경험치 기준 (9명 기준, 3개월 프로젝트 밸런스)
 const LEVEL_THRESHOLDS = [
   { level: 1, exp: 0 },

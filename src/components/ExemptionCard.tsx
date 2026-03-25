@@ -25,7 +25,7 @@ export default function ExemptionCard({
   const [using, setUsing] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [flipped, setFlipped] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
+  const [showConfirm, setShowConfirm] = useState<boolean | "weekend">(false);
   const [sparkle, setSparkle] = useState(false);
 
   const fetchExemptions = useCallback(async () => {
@@ -82,7 +82,12 @@ export default function ExemptionCard({
     }
   };
 
-  const canUse = !hasCheckedInToday && exemptions.length > 0 && !using;
+  // 주말 여부 (KST 기준)
+  const nowKST = new Date(Date.now() + 9 * 3600 * 1000);
+  const dayOfWeek = nowKST.getUTCDay(); // 0=일, 6=토
+  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+
+  const canUse = !hasCheckedInToday && exemptions.length > 0 && !using && !isWeekend;
 
   return (
     <div className="card space-y-4 relative overflow-hidden">
@@ -120,7 +125,7 @@ export default function ExemptionCard({
                   <img
                     src="/mascot.jpg"
                     alt="면제권"
-                    className="w-full h-44 object-cover rounded-xl"
+                    className="w-full object-contain rounded-xl"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent rounded-xl" />
                   <div className="absolute bottom-3 left-4 right-4">
@@ -177,14 +182,8 @@ export default function ExemptionCard({
                     </div>
                   </div>
 
-                  <div className="border-t border-zinc-700 pt-3">
-                    <p className="text-xs text-zinc-500 mb-2">
-                      사용하면 오늘의 벌금이 면제됩니다
-                    </p>
-                    <p className="text-xs text-zinc-600">매주 월요일에 1장 자동 지급</p>
-                  </div>
                 </div>
-                <p className="text-center text-xs text-zinc-500 mt-1">
+                <p className="text-center text-[10px] text-zinc-600 pb-3">
                   탭하여 앞면 보기
                 </p>
               </div>
@@ -196,18 +195,16 @@ export default function ExemptionCard({
             <p className="text-gray-500 text-center text-sm py-1">
               이미 출석했으므로 면제권을 사용할 수 없습니다
             </p>
-          ) : !showConfirm ? (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowConfirm(true);
-              }}
-              disabled={!canUse}
-              className="w-full py-3 rounded-xl font-semibold text-sm transition-all duration-200 bg-gradient-to-r from-yellow-500 to-amber-400 hover:from-yellow-400 hover:to-amber-300 text-white disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-amber-200/50"
-            >
-              오늘 면제권 사용하기 🎫
-            </button>
-          ) : (
+          ) : showConfirm === "weekend" ? (
+            <div className="text-center py-3 bg-gray-50 rounded-xl border border-gray-100 animate-pulse-once">
+              <p className="text-gray-500 text-sm font-medium">🙅 주말에는 면제권을 사용할 수 없습니다</p>
+              <p className="text-gray-400 text-xs mt-1">평일에만 사용 가능해요</p>
+              <button
+                onClick={() => setShowConfirm(false)}
+                className="mt-2 text-xs text-gray-400 underline"
+              >닫기</button>
+            </div>
+          ) : showConfirm === true ? (
             <div className="space-y-2">
               <p className="text-center text-amber-600 text-sm font-medium">
                 정말 오늘 면제권을 사용할까요?
@@ -228,6 +225,21 @@ export default function ExemptionCard({
                 </button>
               </div>
             </div>
+          ) : (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (isWeekend) {
+                  setShowConfirm("weekend");
+                } else {
+                  setShowConfirm(true);
+                }
+              }}
+              disabled={using}
+              className="w-full py-3 rounded-xl font-semibold text-sm transition-all duration-200 bg-gradient-to-r from-yellow-500 to-amber-400 hover:from-yellow-400 hover:to-amber-300 text-white disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-amber-200/50 active:scale-95"
+            >
+              오늘 면제권 사용하기 🎫
+            </button>
           )}
 
           {message && (

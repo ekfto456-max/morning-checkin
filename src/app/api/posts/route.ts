@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { getKSTDayRange } from "@/lib/penalty";
 
 export const dynamic = "force-dynamic";
 
 // GET: 오늘의 포스트 목록
 export async function GET() {
-  const today = new Date();
-  const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+  const { startOfDay, endOfDay } = getKSTDayRange();
 
   const { data, error } = await supabase
     .from("posts")

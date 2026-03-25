@@ -89,15 +89,15 @@ export default function UserProfileModal({
             <>
               {/* 프로필 헤더 */}
               <div className="flex items-center gap-4 mb-5">
-                {user?.avatar_url ? (
+                {user?.avatar_url && (user.avatar_url.startsWith("http") || user.avatar_url.startsWith("/")) ? (
                   <img
                     src={user.avatar_url}
                     alt={userName}
                     className="w-16 h-16 rounded-full object-cover border-2 border-gray-200"
                   />
                 ) : (
-                  <div className="w-16 h-16 rounded-full bg-gray-100 border-2 border-gray-200 flex items-center justify-center text-2xl font-bold text-gray-600">
-                    {userName.charAt(0)}
+                  <div className="w-16 h-16 rounded-full bg-gray-100 border-2 border-gray-200 flex items-center justify-center text-3xl font-bold text-gray-600">
+                    {user?.avatar_url || userName.charAt(0)}
                   </div>
                 )}
                 <div>

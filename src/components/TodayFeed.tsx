@@ -28,12 +28,14 @@ type Comment = {
 
 function Avatar({ src, name, size = "md" }: { src?: string | null; name: string; size?: "sm" | "md" }) {
   const sizeClass = size === "sm" ? "w-6 h-6 text-xs" : "w-8 h-8 text-sm";
-  if (src) {
-    return <img src={src} alt={name} className={`${sizeClass} rounded-full object-cover shrink-0`} />;
+  const emojiSize = size === "sm" ? "text-sm" : "text-lg";
+  const isUrl = src && (src.startsWith("http") || src.startsWith("/"));
+  if (isUrl) {
+    return <img src={src} alt={name} loading="lazy" className={`${sizeClass} rounded-full object-cover shrink-0`} />;
   }
   return (
-    <div className={`${sizeClass} rounded-full bg-gray-200 flex items-center justify-center font-semibold text-gray-600 shrink-0`}>
-      {name.charAt(0)}
+    <div className={`${sizeClass} rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center font-semibold text-gray-600 shrink-0`}>
+      {src ? <span className={emojiSize}>{src}</span> : name.charAt(0)}
     </div>
   );
 }
@@ -138,10 +140,25 @@ function CommentSection({
   };
 
   useEffect(() => {
-    if (open) fetchComments();
+    if (open) {
+      fetchComments();
+      // #8 댓글 자동 포커스
+      setTimeout(() => inputRef.current?.focus(), 100);
+    }
   }, [open]);
 
   const postComment = async (content: string) => {
+    // 낙관적 업데이트: 즉시 UI에 추가
+    const tempId = `temp-${Date.now()}-${Math.random()}`;
+    const tempComment: Comment = {
+      id: tempId,
+      content,
+      created_at: new Date().toISOString(),
+      user_id: currentUserId,
+      user_name: currentUserName,
+    };
+    setComments((prev) => [...prev, tempComment]);
+
     const res = await fetch("/api/comments", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -149,17 +166,22 @@ function CommentSection({
     });
     if (res.ok) {
       const newComment = await res.json();
-      setComments((prev) => [...prev, newComment]);
+      setComments((prev) => prev.map((c) => (c.id === tempId ? newComment : c)));
+    } else {
+      setComments((prev) => prev.filter((c) => c.id !== tempId));
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || submitting) return;
-    setSubmitting(true);
-    await postComment(input.trim());
+    const content = input.trim();
     setInput("");
+    setSubmitting(true);
+    await postComment(content);
     setSubmitting(false);
+    // 전송 후 재포커스
+    setTimeout(() => inputRef.current?.focus(), 50);
   };
 
   const formatTime = (t: string) => {
@@ -173,7 +195,7 @@ function CommentSection({
     <div className="mt-2 border-t border-gray-100 pt-2">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 transition-colors"
+        className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 transition-colors active:scale-95"
       >
         <span>💬</span>
         <span>
@@ -186,13 +208,23 @@ function CommentSection({
       {open && (
         <div className="mt-2 space-y-2">
           {loading ? (
-            <p className="text-xs text-gray-400 text-center py-1">불러오는 중...</p>
+            <div className="space-y-2 animate-pulse">
+              {[1, 2].map((i) => (
+                <div key={i} className="flex gap-2 items-start">
+                  <div className="w-6 h-6 rounded-full bg-gray-200 shrink-0" />
+                  <div className="flex-1 space-y-1">
+                    <div className="h-2.5 bg-gray-200 rounded w-16" />
+                    <div className="h-2.5 bg-gray-200 rounded w-32" />
+                  </div>
+                </div>
+              ))}
+            </div>
           ) : comments.length === 0 ? (
             <p className="text-xs text-gray-400 text-center py-1">첫 댓글을 달아봐요! 🦭</p>
           ) : (
             <div className="space-y-2">
               {comments.map((c) => (
-                <div key={c.id} className="flex gap-2 items-start">
+                <div key={c.id} className={`flex gap-2 items-start ${c.id.startsWith("temp-") ? "opacity-60" : ""}`}>
                   <div className="mt-0.5">
                     <Avatar src={c.avatar_url} name={c.user_name} size="sm" />
                   </div>
@@ -234,7 +266,7 @@ function CommentSection({
             <button
               type="submit"
               disabled={!input.trim() || submitting}
-              className="text-xs bg-red-500 hover:bg-red-600 text-white disabled:opacity-40 disabled:cursor-not-allowed rounded-xl px-3 py-1.5 font-semibold transition-colors"
+              className="text-xs bg-red-500 hover:bg-red-600 text-white disabled:opacity-40 disabled:cursor-not-allowed rounded-xl px-3 py-1.5 font-semibold transition-all active:scale-95 duration-75"
             >
               {submitting ? "..." : "전송"}
             </button>
@@ -260,6 +292,7 @@ function PostComposer({
   const [image, setImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [postError, setPostError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -273,6 +306,7 @@ function PostComposer({
   const handleSubmit = async () => {
     if (!text.trim() || submitting) return;
     setSubmitting(true);
+    setPostError(null);
     try {
       const formData = new FormData();
       formData.append("user_id", currentUserId);
@@ -286,7 +320,12 @@ function PostComposer({
         setPreview(null);
         if (fileRef.current) fileRef.current.value = "";
         onPosted();
+      } else {
+        const body = await res.json().catch(() => ({}));
+        setPostError(`게시 실패 (${res.status}): ${body.error || "알 수 없는 오류"}`);
       }
+    } catch (e) {
+      setPostError("네트워크 오류가 발생했어요");
     } finally {
       setSubmitting(false);
     }
@@ -309,7 +348,7 @@ function PostComposer({
       </div>
       {preview && (
         <div className="relative ml-10">
-          <img src={preview} alt="미리보기" className="w-32 h-24 object-cover rounded-xl border border-gray-200" />
+          <img src={preview} alt="미리보기" loading="lazy" className="w-32 h-24 object-cover rounded-xl border border-gray-200" />
           <button
             onClick={() => { setImage(null); setPreview(null); if (fileRef.current) fileRef.current.value = ""; }}
             className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-gray-500 hover:bg-red-400 text-white rounded-full text-xs flex items-center justify-center"
@@ -325,12 +364,15 @@ function PostComposer({
         <button
           onClick={handleSubmit}
           disabled={!text.trim() || submitting}
-          className="text-xs font-semibold text-white px-4 py-1.5 rounded-xl disabled:opacity-40 transition-all"
+          className="text-xs font-semibold text-white px-4 py-1.5 rounded-xl disabled:opacity-40 transition-all active:scale-95 duration-75"
           style={{ background: "linear-gradient(135deg, #FF4757, #C0392B)" }}
         >
           {submitting ? "..." : "게시"}
         </button>
       </div>
+      {postError && (
+        <p className="text-red-500 text-xs bg-red-50 border border-red-100 rounded-xl px-3 py-2 ml-10">{postError}</p>
+      )}
     </div>
   );
 }
@@ -351,8 +393,10 @@ export default function TodayFeed({
   const [profileModal, setProfileModal] = useState<{ userId: string; userName: string } | null>(null);
   const [localRefresh, setLocalRefresh] = useState(0);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [showAll, setShowAll] = useState(false);
-  const INITIAL_SHOW = 10;
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   const handleDeletePost = async (postId: string) => {
     if (!currentUserId || deletingId) return;
@@ -370,58 +414,135 @@ export default function TodayFeed({
   useEffect(() => {
     const fetchFeed = async () => {
       try {
-        const res = await fetch("/api/feed");
-        if (res.ok) setFeed(await res.json());
+        const res = await fetch(`/api/feed?page=${page}`);
+        if (res.ok) {
+          const data = await res.json();
+          setFeed(data.items);
+          setTotalPages(data.totalPages);
+          setTotal(data.total);
+        }
       } catch {
         // 조회 실패
       } finally {
         setLoading(false);
       }
     };
-    fetchFeed();
-    const interval = setInterval(fetchFeed, 5000);
-    return () => clearInterval(interval);
-  }, [refreshKey, localRefresh]);
 
-  const formatTime = (time: string) => {
+    fetchFeed();
+
+    // 백그라운드 폴링 중단 — Page Visibility API (1페이지만)
+    if (page !== 1) return;
+    let interval: ReturnType<typeof setInterval> | null = null;
+    const startPolling = () => {
+      if (interval) clearInterval(interval);
+      interval = setInterval(fetchFeed, 10000);
+    };
+    const stopPolling = () => { if (interval) { clearInterval(interval); interval = null; } };
+    const handleVisibilityChange = () => {
+      if (document.hidden) stopPolling();
+      else { fetchFeed(); startPolling(); }
+    };
+    if (!document.hidden) startPolling();
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      stopPolling();
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [refreshKey, localRefresh, page]);
+
+  const goToPage = (p: number) => {
+    setPage(p);
+    setLoading(true);
+    // 카드 상단으로 스크롤
+    setTimeout(() => cardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+  };
+
+  const formatDateTime = (time: string) => {
     const d = new Date(time);
+    const now = new Date();
+    const isToday = d.toDateString() === now.toDateString();
     const h = d.getHours();
     const m = d.getMinutes().toString().padStart(2, "0");
     const ampm = h < 12 ? "오전" : "오후";
     const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
-    return `${ampm} ${h12}:${m}`;
+    if (isToday) return `${ampm} ${h12}:${m}`;
+    const mo = d.getMonth() + 1;
+    const day = d.getDate();
+    return `${mo}/${day} ${ampm} ${h12}:${m}`;
+  };
+
+  // 페이지 번호 배열 생성 (최대 5개 표시)
+  const getPageNumbers = () => {
+    if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i + 1);
+    const pages: (number | "...")[] = [];
+    if (page <= 4) {
+      pages.push(1, 2, 3, 4, 5, "...", totalPages);
+    } else if (page >= totalPages - 3) {
+      pages.push(1, "...", totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+    } else {
+      pages.push(1, "...", page - 1, page, page + 1, "...", totalPages);
+    }
+    return pages;
   };
 
   if (loading) {
     return (
-      <div className="card">
-        <h2 className="text-lg font-bold flex items-center gap-2 mb-3 text-gray-900">
-          <span>📢</span><span>오늘의 피드</span>
+      <div className="card space-y-3">
+        <h2 className="text-lg font-bold flex items-center gap-2 text-gray-900">
+          <span>📢</span><span>피드</span>
         </h2>
-        <p className="text-gray-400 text-center py-4 text-sm">로딩 중...</p>
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="bg-gray-50 rounded-xl p-3 border border-gray-100 animate-pulse">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-8 h-8 rounded-full bg-gray-200 shrink-0" />
+              <div className="flex-1 space-y-1.5">
+                <div className="h-3 bg-gray-200 rounded w-20" />
+                <div className="h-2.5 bg-gray-200 rounded w-14" />
+              </div>
+              <div className="h-2.5 bg-gray-200 rounded w-12" />
+            </div>
+            <div className="space-y-1.5 mb-3">
+              <div className="h-3 bg-gray-200 rounded w-full" />
+              <div className="h-3 bg-gray-200 rounded w-2/3" />
+            </div>
+            <div className="flex gap-1.5">
+              {[1, 2, 3, 4].map((j) => (
+                <div key={j} className="h-7 w-10 bg-gray-200 rounded-full" />
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
     );
   }
 
   return (
-    <div className="card space-y-4">
-      <h2 className="text-lg font-bold flex items-center gap-2 text-gray-900">
-        <span>📢</span>
-        <span>오늘의 피드</span>
-        {feed.length > 0 && (
-          <span className="text-xs bg-red-50 text-red-500 border border-red-100 px-2 py-0.5 rounded-full font-semibold">
-            {feed.length}
-          </span>
+    <div ref={cardRef} className="card space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-bold flex items-center gap-2 text-gray-900">
+          <span>📢</span>
+          <span>피드</span>
+          {total > 0 && (
+            <span className="text-xs bg-red-50 text-red-500 border border-red-100 px-2 py-0.5 rounded-full font-semibold">
+              총 {total}
+            </span>
+          )}
+        </h2>
+        {totalPages > 1 && (
+          <span className="text-xs text-gray-400">{page} / {totalPages} 페이지</span>
         )}
-      </h2>
+      </div>
 
-      {/* 글 작성 컴포저 */}
-      {currentUserId && currentUserName && (
+      {/* 글 작성 컴포저 — 1페이지에만 표시 */}
+      {page === 1 && currentUserId && currentUserName && (
         <PostComposer
           currentUserId={currentUserId}
           currentUserName={currentUserName}
           currentUserAvatarUrl={currentUserAvatarUrl}
-          onPosted={() => setLocalRefresh((n) => n + 1)}
+          onPosted={() => {
+            setPage(1);
+            setLocalRefresh((n) => n + 1);
+          }}
         />
       )}
 
@@ -432,7 +553,7 @@ export default function TodayFeed({
         </div>
       ) : (
         <div className="space-y-3">
-          {(showAll ? feed : feed.slice(0, INITIAL_SHOW)).map((item) => (
+          {feed.map((item) => (
             <div key={item.id} className="bg-gray-50 rounded-xl p-3 border border-gray-100">
               {/* 헤더 */}
               <div className="flex items-center justify-between mb-2">
@@ -452,13 +573,14 @@ export default function TodayFeed({
                   {item.type === "post" && item.user_id === currentUserId && (
                     <button
                       onClick={() => handleDeletePost(item.id)}
-                      className="text-gray-300 hover:text-red-400 transition-colors text-xs px-1"
+                      disabled={deletingId === item.id}
+                      className="text-gray-300 hover:text-red-400 transition-colors text-xs px-1 disabled:opacity-40"
                       title="삭제"
                     >
-                      🗑️
+                      {deletingId === item.id ? "⏳" : "🗑️"}
                     </button>
                   )}
-                  <span className="text-xs text-gray-400">{formatTime(item.checkin_time)}</span>
+                  <span className="text-xs text-gray-400">{formatDateTime(item.checkin_time)}</span>
                   {item.type === "checkin" && (
                     <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
                       item.status === "on_time"
@@ -479,7 +601,7 @@ export default function TodayFeed({
                   )}
                   {item.image_url && (
                     <div className="rounded-xl overflow-hidden mb-1">
-                      <img src={item.image_url} alt="첨부 이미지" className="w-full max-h-64 object-cover" />
+                      <img src={item.image_url} alt="첨부 이미지" loading="lazy" className="w-full max-h-64 object-cover" />
                     </div>
                   )}
                 </>
@@ -488,7 +610,7 @@ export default function TodayFeed({
               {/* 인증샷 */}
               {item.type === "checkin" && item.image_url && (
                 <div className="rounded-xl overflow-hidden">
-                  <img src={item.image_url} alt="인증샷" className="w-full h-48 object-cover" />
+                  <img src={item.image_url} alt="인증샷" loading="lazy" className="w-full h-48 object-cover" />
                   <div className="bg-black/60 px-3 py-1.5 text-xs text-white/80">
                     {new Date(item.checkin_time).toLocaleString("ko-KR", {
                       year: "numeric", month: "long", day: "numeric",
@@ -496,6 +618,11 @@ export default function TodayFeed({
                     })}
                   </div>
                 </div>
+              )}
+
+              {/* 사진 없는 체크인 안내 */}
+              {item.type === "checkin" && !item.image_url && (
+                <p className="text-xs text-gray-400 italic mb-1">📷 인증샷 없이 출석</p>
               )}
 
               {/* 면제권 */}
@@ -522,13 +649,43 @@ export default function TodayFeed({
               )}
             </div>
           ))}
-          {feed.length > INITIAL_SHOW && (
-            <button
-              onClick={() => setShowAll((v) => !v)}
-              className="w-full text-xs text-gray-400 hover:text-gray-600 py-2 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors"
-            >
-              {showAll ? "접기 ▲" : `더보기 (${feed.length - INITIAL_SHOW}개 더) ▼`}
-            </button>
+
+          {/* 페이지네이션 */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-1 pt-1">
+              <button
+                onClick={() => goToPage(page - 1)}
+                disabled={page === 1}
+                className="w-8 h-8 flex items-center justify-center rounded-lg text-sm text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              >
+                ‹
+              </button>
+              {getPageNumbers().map((p, i) =>
+                p === "..." ? (
+                  <span key={`ellipsis-${i}`} className="w-8 h-8 flex items-center justify-center text-xs text-gray-400">…</span>
+                ) : (
+                  <button
+                    key={p}
+                    onClick={() => goToPage(p as number)}
+                    className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-medium transition-all ${
+                      page === p
+                        ? "text-white shadow-sm"
+                        : "text-gray-500 hover:bg-gray-100"
+                    }`}
+                    style={page === p ? { background: "linear-gradient(135deg, #FF4757, #C0392B)" } : {}}
+                  >
+                    {p}
+                  </button>
+                )
+              )}
+              <button
+                onClick={() => goToPage(page + 1)}
+                disabled={page === totalPages}
+                className="w-8 h-8 flex items-center justify-center rounded-lg text-sm text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              >
+                ›
+              </button>
+            </div>
           )}
         </div>
       )}

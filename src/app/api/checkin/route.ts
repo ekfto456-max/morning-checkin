@@ -4,6 +4,8 @@ import { calculatePenalty, getKSTDayRange } from "@/lib/penalty";
 import { isUsingMockMode, mockCheckins, generateId, getMockSeal, updateMockSeal } from "@/lib/mock-store";
 import { grantWeeklyExemptions } from "@/lib/weekly-exemption";
 
+export const dynamic = "force-dynamic";
+
 // 출석 시 물개 EXP 지급
 async function addSealExp(status: string, checkinHour: number, userId: string) {
   let amount = 0;
@@ -131,6 +133,16 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // 주말 차단 (KST 기준)
+  const weekendCheckKST = new Date(Date.now() + 9 * 3600 * 1000);
+  const dayOfWeek = weekendCheckKST.getUTCDay(); // 0=일, 6=토
+  if (dayOfWeek === 0 || dayOfWeek === 6) {
+    return NextResponse.json(
+      { error: "주말에는 출석 인증을 할 수 없어요 😴" },
+      { status: 403 }
+    );
+  }
+
   // KST 기준 오늘 범위
   const { startOfDay, endOfDay } = getKSTDayRange();
 
@@ -170,6 +182,17 @@ export async function POST(request: NextRequest) {
     await addSealExp(status, now.getHours(), userId);
 
     return NextResponse.json(newCheckin);
+  }
+
+  // KST 기준 오전 5시 이전 체크인 차단
+  const nowKST = new Date(Date.now() + 9 * 3600 * 1000);
+  const kstHour = nowKST.getUTCHours();
+  const kstMinute = nowKST.getUTCMinutes();
+  if (kstHour < 5) {
+    return NextResponse.json(
+      { error: `아직 출석 시간이 아니에요 🌙 오전 5시부터 인증 가능합니다 (현재 ${kstHour}시 ${kstMinute}분)` },
+      { status: 403 }
+    );
   }
 
   // Supabase 모드

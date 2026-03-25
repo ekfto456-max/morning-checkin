@@ -9,7 +9,7 @@ export default function LoginForm({
 }: {
   onLogin: (user: User) => void;
 }) {
-  const [batch, setBatch] = useState("");
+  const [wakeTime, setWakeTime] = useState("");
   const [name, setName] = useState("");
   const [purpose, setPurpose] = useState("");
   const [loading, setLoading] = useState(false);
@@ -19,7 +19,7 @@ export default function LoginForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !batch.trim() || !purpose.trim()) return;
+    if (!name.trim() || !wakeTime.trim() || !purpose.trim()) return;
 
     setLoading(true);
     setError("");
@@ -30,7 +30,7 @@ export default function LoginForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: name.trim(),
-          batch: batch.trim(),
+          batch: wakeTime.trim(),
           purpose: purpose.trim(),
         }),
       });
@@ -47,7 +47,7 @@ export default function LoginForm({
     }
   };
 
-  const isValid = name.trim() && batch.trim() && purpose.trim();
+  const isValid = name.trim() && wakeTime.trim() && purpose.trim();
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
@@ -74,13 +74,12 @@ export default function LoginForm({
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
             <label className="block text-xs text-zinc-400 mb-1 ml-1">
-              📋 몇 기인가요?
+              ⏰ 목표 기상 시간
             </label>
             <input
-              type="text"
-              placeholder="예: 1기, 2기..."
-              value={batch}
-              onChange={(e) => setBatch(e.target.value)}
+              type="time"
+              value={wakeTime}
+              onChange={(e) => setWakeTime(e.target.value)}
               className="w-full px-4 py-3 bg-zinc-900 border border-zinc-700 rounded-xl text-white placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
               disabled={loading}
             />

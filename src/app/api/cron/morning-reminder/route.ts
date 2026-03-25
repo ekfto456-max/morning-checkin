@@ -19,8 +19,8 @@ export async function GET(request: NextRequest) {
 
   const { startOfDay, endOfDay } = getKSTDayRange();
 
-  // 오늘 아직 출석 안 한 유저 목록
-  const { data: allUsers } = await supabase.from("users").select("id");
+  // 오늘 아직 출석 안 한 유저 목록 (custom_deadline_time 포함)
+  const { data: allUsers } = await supabase.from("users").select("id, name, custom_deadline_time");
   const { data: todayCheckins } = await supabase
     .from("checkins")
     .select("user_id")
@@ -28,35 +28,56 @@ export async function GET(request: NextRequest) {
     .lt("checkin_time", endOfDay.toISOString());
 
   const checkedInIds = new Set((todayCheckins || []).map((c) => c.user_id));
-  const absentIds = (allUsers || [])
-    .map((u) => u.id)
-    .filter((id) => !checkedInIds.has(id));
+  const absentUsers = (allUsers || []).filter((u) => !checkedInIds.has(u.id));
 
-  if (absentIds.length === 0) {
+  if (absentUsers.length === 0) {
     return NextResponse.json({ sent: 0, message: "전원 출석 완료" });
   }
+
+  const absentIds = absentUsers.map((u) => u.id);
+  const userMap = new Map(absentUsers.map((u) => [u.id, u]));
 
   // 미출석 유저의 푸시 구독 가져오기
   const { data: subs } = await supabase
     .from("push_subscriptions")
-    .select("endpoint, p256dh, auth")
+    .select("endpoint, p256dh, auth, user_id")
     .in("user_id", absentIds);
 
   if (!subs || subs.length === 0) {
     return NextResponse.json({ sent: 0, message: "구독자 없음" });
   }
 
-  const payload = JSON.stringify({
-    title: "💀 죽기스 출석 알림",
-    body: "10:04 마감까지 34분 남았어요! 얼른 출석 인증하세요 🦭",
-    url: "/",
-  });
+  // 개인 마감 시간 기준 알림 메시지 생성
+  const now = new Date();
+  const kstNow = new Date(now.getTime() + 9 * 3600 * 1000);
+
+  const getDeadlineMessage = (customDeadline?: string | null) => {
+    const dl = customDeadline || "10:03";
+    const [h, m] = dl.split(":").map(Number);
+    const deadlineMinutes = h * 60 + m;
+    const nowMinutes = kstNow.getUTCHours() * 60 + kstNow.getUTCMinutes();
+    const remaining = deadlineMinutes - nowMinutes;
+    const ampm = h < 12 ? "오전" : "오후";
+    const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+    const timeStr = `${ampm} ${h12}:${String(m).padStart(2, "0")}`;
+    if (remaining > 0) {
+      return `${timeStr} 마감까지 ${remaining}분 남았어요! 얼른 출석 인증하세요 🦭`;
+    }
+    return `${timeStr} 마감! 아직 출석 안 하셨어요 😱`;
+  };
 
   let sent = 0;
   const expired: string[] = [];
 
   await Promise.allSettled(
     subs.map(async (sub) => {
+      const user = userMap.get(sub.user_id);
+      const body = getDeadlineMessage(user?.custom_deadline_time);
+      const payload = JSON.stringify({
+        title: "💀 죽기스 출석 알림",
+        body,
+        url: "/",
+      });
       try {
         await webpush.sendNotification(
           { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },

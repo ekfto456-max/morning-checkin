@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { isUsingMockMode, mockUsers } from "@/lib/mock-store";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(request: NextRequest) {
   const formData = await request.formData();
   const userId = formData.get("user_id") as string;

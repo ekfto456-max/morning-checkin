@@ -170,8 +170,9 @@ function r(arr: string[]): string {
 }
 
 function getTimeBasedMessage(): string | null {
-  const hour = new Date().getHours();
-  const min = new Date().getMinutes();
+  const kst = new Date(Date.now() + 9 * 3600 * 1000);
+  const hour = kst.getUTCHours();
+  const min = kst.getUTCMinutes();
   if (hour >= 6 && hour < 9) return r(TIME_MESSAGES.dawn);
   if (hour === 9) return r(TIME_MESSAGES.nine);
   if (hour === 10 && min < 4) return r(TIME_MESSAGES.deadline);
@@ -431,6 +432,15 @@ export default function SealCard({ userId, customDeadlineTime }: { userId: strin
     setShowFeedAnimation(true);
     startCooldown();
 
+    // 낙관적 업데이트: 애니메이션과 즉시 반응
+    setFishCount((c) => c + 1);
+    setShowSparkle(true);
+    setMessage("물고기 맛있다~ 고마워! 🐟");
+    showExpPopup(0.1);
+
+    // 낙관적으로 EXP도 즉시 반영
+    setSeal((prev) => prev ? { ...prev, exp: prev.exp + 0.1, last_fed: new Date().toISOString() } : prev);
+
     await new Promise((r) => setTimeout(r, 800));
     setShowFeedAnimation(false);
 
@@ -444,20 +454,18 @@ export default function SealCard({ userId, customDeadlineTime }: { userId: strin
       if (res.ok) {
         const data = await res.json();
         const prevLevel = seal?.level ?? 1;
-        setSeal(data);
-        setFishCount((c) => c + 1);
-        setShowSparkle(true);
-        setMessage("물고기 맛있다~ 고마워! 🐟");
-        showExpPopup(0.1);
+        setSeal(data); // 서버 정확값으로 교체
         if (data.level > prevLevel) {
           setLevelUpEffect(true);
           setMessage(`🎉 레벨 업! Lv.${data.level} 됐어!`);
           setTimeout(() => setLevelUpEffect(false), 2000);
         }
         setTimeout(() => setShowSparkle(false), 2000);
+      } else {
+        setTimeout(() => setShowSparkle(false), 500);
       }
     } catch {
-      // 에러 무시
+      setTimeout(() => setShowSparkle(false), 500);
     } finally {
       setFeeding(false);
     }
@@ -472,8 +480,12 @@ export default function SealCard({ userId, customDeadlineTime }: { userId: strin
     }, 1500);
   };
 
-  // 공통: API로 EXP 적립
+  // 공통: API로 EXP 적립 (낙관적: 즉시 팝업 + UI 반영)
   const addExpToSeal = async (amount: number) => {
+    // 낙관적 업데이트
+    showExpPopup(amount);
+    setSeal((prev) => prev ? { ...prev, exp: prev.exp + amount } : prev);
+
     try {
       const res = await fetch("/api/seal", {
         method: "POST",
@@ -483,9 +495,7 @@ export default function SealCard({ userId, customDeadlineTime }: { userId: strin
       if (res.ok) {
         const data = await res.json();
         const prevLevel = seal?.level ?? 1;
-        setSeal(data);
-        showExpPopup(amount);
-        // 레벨업 효과
+        setSeal(data); // 서버 정확값으로 교체
         if (data.level > prevLevel) {
           setLevelUpEffect(true);
           setMessage(`🎉 레벨 업! Lv.${data.level} 됐어!`);
@@ -493,7 +503,7 @@ export default function SealCard({ userId, customDeadlineTime }: { userId: strin
         }
       }
     } catch {
-      // 에러 무시
+      // 에러 무시 (낙관적 값 유지)
     }
   };
 

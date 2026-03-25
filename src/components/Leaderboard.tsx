@@ -48,7 +48,17 @@ export default function Leaderboard({ refreshKey }: { refreshKey: number }) {
       </h2>
 
       {loading ? (
-        <p className="text-gray-400 text-center py-4 text-sm">로딩 중...</p>
+        <div className="space-y-1 animate-pulse">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="flex items-center justify-between py-2.5 px-3 rounded-xl">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-5 bg-gray-200 rounded" />
+                <div className="h-3.5 bg-gray-200 rounded w-16" />
+              </div>
+              <div className="h-3.5 bg-gray-200 rounded w-14" />
+            </div>
+          ))}
+        </div>
       ) : entries.length === 0 ? (
         <p className="text-gray-400 text-center py-4 text-sm">아직 참가자가 없습니다</p>
       ) : (

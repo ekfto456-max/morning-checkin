@@ -2,12 +2,14 @@ import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { isUsingMockMode, mockUsers, mockCheckins, mockExemptions } from "@/lib/mock-store";
 import { grantWeeklyExemptions } from "@/lib/weekly-exemption";
+import { getKSTDayRange } from "@/lib/penalty";
+
+export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const today = new Date();
-  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-  const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+  const nowKST = new Date(Date.now() + 9 * 3600 * 1000);
+  const todayStr = nowKST.toISOString().split("T")[0];
+  const { startOfDay, endOfDay } = getKSTDayRange();
 
   if (isUsingMockMode()) {
     // Mock: 이번 주 면제권 전체 자동 지급
@@ -119,11 +121,18 @@ export async function GET() {
     return NextResponse.json({ error: exemptionsError.message }, { status: 500 });
   }
 
-  // 미사용 면제권 (남은 개수 계산용)
+  // 이번 주 월요일 계산 (KST)
+  const dayOfWeek = nowKST.getUTCDay();
+  const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+  const thisMondayKST = new Date(nowKST.getTime() + mondayOffset * 86400 * 1000);
+  const thisMondayStr = thisMondayKST.toISOString().split("T")[0];
+
+  // 미사용 면제권 — 이번 주 지급분만 (지난 주 소멸 처리)
   const { data: unusedExemptions, error: unusedError } = await supabase
     .from("exemptions")
     .select("user_id")
-    .is("used_for_date", null);
+    .is("used_for_date", null)
+    .gte("granted_at", `${thisMondayStr}T00:00:00.000Z`);
 
   if (unusedError) {
     return NextResponse.json({ error: unusedError.message }, { status: 500 });

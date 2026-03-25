@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(request: NextRequest) {
   const checkinId = request.nextUrl.searchParams.get("checkin_id");
   if (!checkinId) return NextResponse.json({}, { status: 400 });

@@ -102,7 +102,8 @@ export default function AttendanceCalendar({ userId }: { userId: string }) {
 
     // 오늘인 경우 아직 체크인 안한 상태 (10:04 전이면 아직 기회 있음)
     if (cellDate.getTime() === today.getTime()) {
-      const currentMinutes = now.getHours() * 60 + now.getMinutes();
+      const kstNow = new Date(now.getTime() + 9 * 3600 * 1000);
+      const currentMinutes = kstNow.getUTCHours() * 60 + kstNow.getUTCMinutes();
       if (currentMinutes < 10 * 60 + 4) {
         return "none"; // 아직 체크인 시간 전
       }

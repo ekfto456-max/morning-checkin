@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { isUsingMockMode, mockCheckins, mockExemptions } from "@/lib/mock-store";
 
+export const dynamic = "force-dynamic";
+
 // GET: 특정 월의 출석 및 면제 데이터 조회
 export async function GET(request: NextRequest) {
   const userId = request.nextUrl.searchParams.get("user_id");

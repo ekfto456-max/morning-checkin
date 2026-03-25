@@ -80,6 +80,20 @@ export default function CheckinUpload({
     }
   };
 
+  // 주말 + 새벽 5시 이전 체크 (KST 기준)
+  const nowKST = new Date(Date.now() + 9 * 3600 * 1000);
+  const dayOfWeek = nowKST.getUTCDay();
+  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+  const isBefore5am = nowKST.getUTCHours() < 5;
+  const isBlocked = isWeekend || isBefore5am;
+  const dayName = ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"][dayOfWeek];
+
+  const handleUploadOrBlocked = () => {
+    if (isWeekend) { setError("weekend"); return; }
+    if (isBefore5am) { setError("early"); return; }
+    handleUpload();
+  };
+
   return (
     <div className="card space-y-4">
       <h2 className="text-lg font-bold flex items-center gap-2 text-gray-900">
@@ -90,28 +104,38 @@ export default function CheckinUpload({
       <div className="space-y-3">
         {/* 카메라 / 갤러리 */}
         <div className="grid grid-cols-2 gap-3">
-          <label className="flex items-center justify-center gap-2 py-3.5 bg-gray-50 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors">
+          <label
+            className="flex items-center justify-center gap-2 py-3.5 bg-gray-50 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors"
+            onClick={isBlocked ? (e) => { e.preventDefault(); setError(isWeekend ? "weekend" : "early"); } : undefined}
+          >
             <span>📷</span>
             <span className="text-sm font-semibold text-gray-700">카메라</span>
-            <input
-              ref={cameraRef}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              onChange={handleFileChange}
-              className="hidden"
-            />
+            {!isBlocked && (
+              <input
+                ref={cameraRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={handleFileChange}
+                className="hidden"
+              />
+            )}
           </label>
-          <label className="flex items-center justify-center gap-2 py-3.5 bg-gray-50 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors">
+          <label
+            className="flex items-center justify-center gap-2 py-3.5 bg-gray-50 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors"
+            onClick={isBlocked ? (e) => { e.preventDefault(); setError(isWeekend ? "weekend" : "early"); } : undefined}
+          >
             <span>🖼️</span>
             <span className="text-sm font-semibold text-gray-700">갤러리</span>
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/*"
-              onChange={handleFileChange}
-              className="hidden"
-            />
+            {!isBlocked && (
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="hidden"
+              />
+            )}
           </label>
         </div>
 
@@ -126,21 +150,39 @@ export default function CheckinUpload({
 
         {/* 출석하기 버튼 */}
         <button
-          onClick={handleUpload}
-          disabled={loading || !preview}
+          onClick={handleUploadOrBlocked}
+          disabled={loading || (!preview && !isBlocked)}
           className="w-full py-3.5 rounded-xl font-bold text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-95"
           style={{
-            background: preview && !loading
+            background: (preview || isBlocked) && !loading
               ? "linear-gradient(135deg, #FF4757, #C0392B)"
               : undefined,
-            backgroundColor: (!preview || loading) ? "#e5e7eb" : undefined,
+            backgroundColor: (!preview && !isBlocked) || loading ? "#e5e7eb" : undefined,
           }}
         >
           {loading ? "업로드 중..." : "출석하기 💀"}
         </button>
       </div>
 
-      {error && (
+      {/* 주말 안내 */}
+      {error === "weekend" && (
+        <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 text-center space-y-1.5">
+          <p className="text-2xl">😴</p>
+          <p className="font-semibold text-gray-700 text-sm">오늘은 {dayName}이에요</p>
+          <p className="text-xs text-gray-400">주말에는 기상 출석이 없어요.<br />푹 쉬고 월요일에 만나요! 🦭</p>
+        </div>
+      )}
+
+      {/* 새벽 5시 이전 안내 */}
+      {error === "early" && (
+        <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 text-center space-y-1.5">
+          <p className="text-2xl">🌙</p>
+          <p className="font-semibold text-gray-700 text-sm">아직 출석 시간이 아니에요</p>
+          <p className="text-xs text-gray-400">오전 5시부터 출석 인증이 가능합니다</p>
+        </div>
+      )}
+
+      {error && error !== "weekend" && error !== "early" && (
         <p className="text-red-500 text-sm bg-red-50 border border-red-100 rounded-xl px-3 py-2">
           {error}
         </p>

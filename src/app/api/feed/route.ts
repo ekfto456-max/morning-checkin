@@ -4,73 +4,49 @@ import { isUsingMockMode, mockCheckins, mockUsers, mockExemptions } from "@/lib/
 
 export const dynamic = "force-dynamic";
 
-// 오늘의 인증샷 피드 (단톡방처럼)
+const PAGE_SIZE = 10;
+
+// 전체 피드 아카이브 (페이지네이션)
 export async function GET(request: NextRequest) {
-  const today = new Date();
-  const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+  const { searchParams } = request.nextUrl;
+  const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
+  const offset = (page - 1) * PAGE_SIZE;
 
   if (isUsingMockMode()) {
-    const todayCheckins = mockCheckins
-      .filter((c) => {
-        const t = new Date(c.checkin_time);
-        return t >= startOfDay && t < endOfDay;
-      })
-      .map((c) => {
+    const allItems = [
+      ...mockCheckins.map((c) => {
         const user = mockUsers.find((u) => u.id === c.user_id);
-        return {
-          ...c,
-          user_name: user?.name || "알 수 없음",
-          type: "checkin" as const,
-        };
-      });
+        return { ...c, user_name: user?.name || "알 수 없음", type: "checkin" as const };
+      }),
+    ].sort((a, b) => new Date(b.checkin_time).getTime() - new Date(a.checkin_time).getTime());
 
-    const todayExemptions = mockExemptions
-      .filter((e) => {
-        const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-        return e.used_for_date === dateStr;
-      })
-      .map((e) => {
-        const user = mockUsers.find((u) => u.id === e.user_id);
-        return {
-          id: e.id,
-          user_id: e.user_id,
-          user_name: user?.name || "알 수 없음",
-          checkin_time: e.used_at || e.granted_at,
-          type: "exemption" as const,
-          reason: e.reason,
-        };
-      });
-
-    const feed = [...todayCheckins, ...todayExemptions].sort(
-      (a, b) => new Date(a.checkin_time).getTime() - new Date(b.checkin_time).getTime()
-    );
-
-    return NextResponse.json(feed);
+    return NextResponse.json({
+      items: allItems.slice(offset, offset + PAGE_SIZE),
+      total: allItems.length,
+      page,
+      totalPages: Math.ceil(allItems.length / PAGE_SIZE),
+    });
   }
 
-  // Supabase 모드
+  // 전체 체크인 (날짜 필터 없음)
   const { data: checkins } = await supabase
     .from("checkins")
     .select("*, users(name, avatar_url)")
-    .gte("checkin_time", startOfDay.toISOString())
-    .lt("checkin_time", endOfDay.toISOString())
-    .order("checkin_time", { ascending: true });
+    .order("checkin_time", { ascending: false });
 
-  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-
+  // 전체 면제권
   const { data: exemptions } = await supabase
     .from("exemptions")
     .select("*, users(name, avatar_url)")
-    .eq("used_for_date", todayStr);
+    .not("used_at", "is", null);
 
+  // 전체 게시글
   const { data: posts } = await supabase
     .from("posts")
     .select("*, users(name, avatar_url)")
-    .gte("created_at", startOfDay.toISOString())
-    .lt("created_at", endOfDay.toISOString());
+    .order("created_at", { ascending: false });
 
-  const feed = [
+  const allItems = [
     ...(checkins || []).map((c: Record<string, unknown>) => ({
       id: c.id,
       user_id: c.user_id,
@@ -101,9 +77,15 @@ export async function GET(request: NextRequest) {
       image_url: p.image_url,
       type: "post" as const,
     })),
-  ].sort(
-    (a, b) => new Date(a.checkin_time).getTime() - new Date(b.checkin_time).getTime()
-  );
+  ].sort((a, b) => new Date(b.checkin_time).getTime() - new Date(a.checkin_time).getTime());
 
-  return NextResponse.json(feed);
+  const total = allItems.length;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  return NextResponse.json({
+    items: allItems.slice(offset, offset + PAGE_SIZE),
+    total,
+    page,
+    totalPages,
+  });
 }

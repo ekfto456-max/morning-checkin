@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import UserProfileModal from "@/components/UserProfileModal";
 
 type MemberStatus = {
   id: string;
@@ -17,8 +18,8 @@ type MemberStatus = {
 
 function formatTime(isoTime: string | null): string {
   if (!isoTime) return "";
-  const d = new Date(isoTime);
-  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  const d = new Date(new Date(isoTime).getTime() + 9 * 3600 * 1000);
+  return `${String(d.getUTCHours()).padStart(2, "0")}:${String(d.getUTCMinutes()).padStart(2, "0")}`;
 }
 
 function StatusBadge({ member }: { member: MemberStatus }) {
@@ -65,6 +66,7 @@ function StatusBadge({ member }: { member: MemberStatus }) {
 export default function MemberBoard({ refreshKey }: { refreshKey: number }) {
   const [members, setMembers] = useState<MemberStatus[]>([]);
   const [loading, setLoading] = useState(true);
+  const [profileModal, setProfileModal] = useState<{ userId: string; userName: string } | null>(null);
 
   useEffect(() => {
     const fetchMembers = async () => {
@@ -109,7 +111,18 @@ export default function MemberBoard({ refreshKey }: { refreshKey: number }) {
       </h2>
 
       {loading ? (
-        <p className="text-gray-400 text-center py-4">로딩 중...</p>
+        <div className="grid grid-cols-2 gap-2 animate-pulse">
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => (
+            <div key={i} className="rounded-xl border border-gray-100 bg-gray-50 p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="h-3.5 bg-gray-200 rounded w-16" />
+                <div className="h-5 w-5 bg-gray-200 rounded-full" />
+              </div>
+              <div className="h-2.5 bg-gray-200 rounded w-12" />
+              <div className="h-2.5 bg-gray-200 rounded w-20" />
+            </div>
+          ))}
+        </div>
       ) : members.length === 0 ? (
         <p className="text-gray-400 text-center py-4">등록된 멤버가 없습니다</p>
       ) : (
@@ -117,7 +130,8 @@ export default function MemberBoard({ refreshKey }: { refreshKey: number }) {
           {members.map((member) => (
             <div
               key={member.id}
-              className={`rounded-xl px-3 py-2.5 border ${
+              onClick={() => setProfileModal({ userId: member.id, userName: member.name })}
+              className={`rounded-xl px-3 py-2.5 border cursor-pointer active:scale-95 transition-transform ${
                 member.todayStatus === "on_time"
                   ? "bg-green-50 border-green-200"
                   : member.todayStatus === "late"
@@ -160,6 +174,14 @@ export default function MemberBoard({ refreshKey }: { refreshKey: number }) {
             </div>
           ))}
         </div>
+      )}
+
+      {profileModal && (
+        <UserProfileModal
+          userId={profileModal.userId}
+          userName={profileModal.userName}
+          onClose={() => setProfileModal(null)}
+        />
       )}
     </div>
   );

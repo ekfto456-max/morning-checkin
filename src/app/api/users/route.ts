@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { isUsingMockMode, mockUsers, generateId } from "@/lib/mock-store";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(request: NextRequest) {
   const userId = request.nextUrl.searchParams.get("user_id");
   if (!userId) return NextResponse.json({ error: "user_id 필요" }, { status: 400 });
