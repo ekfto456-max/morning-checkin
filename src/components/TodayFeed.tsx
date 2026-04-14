@@ -452,49 +452,57 @@ export default function TodayFeed({
   };
 
   useEffect(() => {
+    const controller = new AbortController();
+    const { signal } = controller;
+
     const fetchFeed = async () => {
       try {
-        const res = await fetch(`/api/feed?page=${page}`);
-        if (res.ok) {
-          const data = await res.json();
-          // 최근 낙관적 아이템 중 서버 응답에 없는 것들은 보존 (15초간)
-          setFeed((prev) => {
-            const now = Date.now();
-            const freshIds = new Set<string>(data.items.map((i: FeedItem) => i.id));
-            // 만료된/확인된 낙관적 아이템 정리
-            pendingOptimisticRef.current.forEach((ts, id) => {
-              if (freshIds.has(id) || now - ts > OPTIMISTIC_WINDOW_MS) {
-                pendingOptimisticRef.current.delete(id);
-              }
-            });
-            // 보존할 낙관적 아이템 (아직 서버에 안 보이는 것들)
-            const kept = prev.filter(
-              (item) =>
-                pendingOptimisticRef.current.has(item.id) &&
-                !freshIds.has(item.id)
-            );
-            const merged = [...kept, ...data.items];
-            // checkin_time 내림차순 정렬
-            return merged.sort(
-              (a, b) =>
-                new Date(b.checkin_time).getTime() -
-                new Date(a.checkin_time).getTime()
-            );
-          });
-          setTotalPages(data.totalPages);
-          setTotal(data.total);
-        }
+        const res = await fetch(`/api/feed?page=${page}`, { signal });
+        if (!res.ok || signal.aborted) return;
+        const data = await res.json();
+        if (signal.aborted) return;
+
+        // pendingOptimisticRef 정리는 setFeed 밖에서 수행 (side-effect 분리)
+        const now = Date.now();
+        const freshIds = new Set<string>(data.items.map((i: FeedItem) => i.id));
+        pendingOptimisticRef.current.forEach((ts, id) => {
+          if (freshIds.has(id) || now - ts > OPTIMISTIC_WINDOW_MS) {
+            pendingOptimisticRef.current.delete(id);
+          }
+        });
+        const idsToPreserve = new Set(pendingOptimisticRef.current.keys());
+
+        setFeed((prev) => {
+          // 보존할 낙관적 아이템 (아직 서버에 안 보이는 것들)
+          const kept = prev.filter(
+            (item) =>
+              idsToPreserve.has(item.id) &&
+              !freshIds.has(item.id)
+          );
+          const merged = [...kept, ...data.items];
+          // checkin_time 내림차순 정렬
+          return merged.sort(
+            (a, b) =>
+              new Date(b.checkin_time).getTime() -
+              new Date(a.checkin_time).getTime()
+          );
+        });
+        setTotalPages(data.totalPages);
+        setTotal(data.total);
       } catch {
+        if (signal.aborted) return;
         // 조회 실패
       } finally {
-        setLoading(false);
+        if (!signal.aborted) setLoading(false);
       }
     };
 
     fetchFeed();
 
     // 백그라운드 폴링 중단 — Page Visibility API (1페이지만)
-    if (page !== 1) return;
+    if (page !== 1) {
+      return () => controller.abort();
+    }
     let interval: ReturnType<typeof setInterval> | null = null;
     const startPolling = () => {
       if (interval) clearInterval(interval);
@@ -508,6 +516,7 @@ export default function TodayFeed({
     if (!document.hidden) startPolling();
     document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => {
+      controller.abort();
       stopPolling();
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
