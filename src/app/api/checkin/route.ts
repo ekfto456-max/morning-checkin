@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin as supabase } from "@/lib/supabase-server";
 import { calculatePenalty, getKSTDayRange } from "@/lib/penalty";
 import { isUsingMockMode, mockCheckins, generateId, getMockSeal, updateMockSeal } from "@/lib/mock-store";
 import { grantWeeklyExemptions } from "@/lib/weekly-exemption";

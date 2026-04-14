@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin as supabase } from "@/lib/supabase-server";
 import { isUsingMockMode, mockExemptions, generateId } from "@/lib/mock-store";
 
 export const dynamic = "force-dynamic";

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import webpush from "web-push";
 
 export const dynamic = "force-dynamic";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin as supabase } from "@/lib/supabase-server";
 import { getKSTDayRange } from "@/lib/penalty";
 
 export async function GET(request: NextRequest) {
