@@ -31,8 +31,10 @@ export default function FloatingChat({ userId, userName }: Props) {
   const [lastSeenCount, setLastSeenCount] = useState(0);
   const [unread, setUnread] = useState(0);
   const [profileModal, setProfileModal] = useState<{ userId: string; userName: string } | null>(null);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const messagesRef = useRef<HTMLDivElement>(null);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchMessages = useCallback(async () => {
@@ -64,18 +66,60 @@ export default function FloatingChat({ userId, userName }: Props) {
     if (open) {
       setLastSeenCount(messages.length);
       setUnread(0);
+      // 처음 열 때는 smooth 없이 즉시 바닥으로 (깜빡임 방지)
       setTimeout(() => {
-        bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-        inputRef.current?.focus();
-      }, 100);
+        if (messagesRef.current) {
+          messagesRef.current.scrollTop = messagesRef.current.scrollHeight;
+        }
+      }, 50);
     }
-  }, [open, messages.length]);
+  }, [open]);
 
   useEffect(() => {
     if (open) {
-      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+      bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
     }
   }, [messages, open]);
+
+  // 모바일 키보드 높이 추적 (visualViewport API)
+  useEffect(() => {
+    if (!open) {
+      setKeyboardHeight(0);
+      return;
+    }
+    const vv = (typeof window !== "undefined" && window.visualViewport) || null;
+    if (!vv) return;
+    const handleResize = () => {
+      const diff = window.innerHeight - vv.height - vv.offsetTop;
+      setKeyboardHeight(diff > 100 ? diff : 0);
+    };
+    vv.addEventListener("resize", handleResize);
+    vv.addEventListener("scroll", handleResize);
+    handleResize();
+    return () => {
+      vv.removeEventListener("resize", handleResize);
+      vv.removeEventListener("scroll", handleResize);
+    };
+  }, [open]);
+
+  // 배경 스크롤 잠금
+  useEffect(() => {
+    if (!open) return;
+    const prevOverflow = document.body.style.overflow;
+    const prevPosition = document.body.style.position;
+    const scrollY = window.scrollY;
+    document.body.style.overflow = "hidden";
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = "100%";
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      document.body.style.position = prevPosition;
+      document.body.style.top = "";
+      document.body.style.width = "";
+      window.scrollTo(0, scrollY);
+    };
+  }, [open]);
 
   const handleSend = async () => {
     const text = input.trim();
@@ -121,24 +165,29 @@ export default function FloatingChat({ userId, userName }: Props) {
       </button>
 
       {/* 배경 오버레이 */}
-      {open && (
-        <div
-          className="fixed inset-0 z-40 bg-black/50"
-          onClick={() => setOpen(false)}
-        />
-      )}
+      <div
+        className={`fixed inset-0 z-40 bg-black/50 transition-opacity duration-300 ${
+          open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+        }`}
+        onClick={() => setOpen(false)}
+        aria-hidden={!open}
+      />
 
       {/* Slide-up Chat Panel - 하프 시트 스타일 */}
       <div
-        className={`fixed left-0 right-0 bottom-0 z-50 flex flex-col transition-transform duration-300 ${
+        className={`fixed left-0 right-0 bottom-0 z-50 flex flex-col ${
           open ? "translate-y-0" : "translate-y-full"
         }`}
         style={{
           background: "#ffffff",
-          height: "75dvh",
+          height: keyboardHeight > 0 ? `calc(85dvh - ${keyboardHeight}px)` : "75dvh",
           borderRadius: "20px 20px 0 0",
           boxShadow: "0 -4px 40px rgba(0,0,0,0.15)",
-        }}
+          transition: "transform 280ms cubic-bezier(0.32, 0.72, 0, 1), height 200ms ease-out",
+          willChange: "transform, height",
+          paddingBottom: keyboardHeight > 0 ? 0 : "env(safe-area-inset-bottom)",
+          WebkitOverflowScrolling: "touch",
+        } as React.CSSProperties}
       >
         {/* Handle bar */}
         <div className="flex justify-center pt-3 pb-1">
@@ -161,7 +210,14 @@ export default function FloatingChat({ userId, userName }: Props) {
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-3 py-4 space-y-3 bg-gray-50">
+        <div
+          ref={messagesRef}
+          className="flex-1 overflow-y-auto px-3 py-4 space-y-3 bg-gray-50"
+          style={{
+            overscrollBehavior: "contain",
+            WebkitOverflowScrolling: "touch",
+          } as React.CSSProperties}
+        >
           {messages.length === 0 && (
             <div className="text-center text-gray-400 text-sm mt-8">
               아직 메시지가 없어요. 첫 메시지를 남겨보세요!
@@ -223,7 +279,10 @@ export default function FloatingChat({ userId, userName }: Props) {
         </div>
 
         {/* Input Bar */}
-        <div className="border-t border-gray-100 bg-white px-3 py-3 flex items-center gap-2">
+        <div
+          className="border-t border-gray-100 bg-white px-3 py-3 flex items-center gap-2"
+          style={{ paddingBottom: keyboardHeight > 0 ? "12px" : "calc(12px + env(safe-area-inset-bottom))" }}
+        >
           <input
             ref={inputRef}
             type="text"
@@ -232,7 +291,9 @@ export default function FloatingChat({ userId, userName }: Props) {
             onKeyDown={handleKeyDown}
             placeholder="메시지 입력..."
             maxLength={500}
-            className="flex-1 bg-gray-50 text-gray-800 text-sm rounded-full px-4 py-2.5 outline-none placeholder-gray-400 border border-gray-200 focus:border-red-300 transition-colors"
+            enterKeyHint="send"
+            className="flex-1 bg-gray-50 text-gray-800 rounded-full px-4 py-2.5 outline-none placeholder-gray-400 border border-gray-200 focus:border-red-300 transition-colors"
+            style={{ fontSize: "16px" }}
           />
           <button
             onClick={handleSend}

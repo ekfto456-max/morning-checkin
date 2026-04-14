@@ -286,7 +286,7 @@ function PostComposer({
   currentUserId: string;
   currentUserName: string;
   currentUserAvatarUrl?: string | null;
-  onPosted: () => void;
+  onPosted: (newPost: FeedItem) => void;
 }) {
   const [text, setText] = useState("");
   const [image, setImage] = useState<File | null>(null);
@@ -315,11 +315,22 @@ function PostComposer({
 
       const res = await fetch("/api/posts", { method: "POST", body: formData });
       if (res.ok) {
+        const newPost = await res.json();
         setText("");
         setImage(null);
         setPreview(null);
         if (fileRef.current) fileRef.current.value = "";
-        onPosted();
+        // 서버에서 받은 데이터로 낙관적 피드 업데이트
+        onPosted({
+          id: newPost.id,
+          user_id: newPost.user_id,
+          user_name: newPost.user_name || currentUserName,
+          avatar_url: currentUserAvatarUrl || null,
+          checkin_time: newPost.created_at,
+          content: newPost.content,
+          image_url: newPost.image_url,
+          type: "post",
+        });
       } else {
         const body = await res.json().catch(() => ({}));
         setPostError(`게시 실패 (${res.status}): ${body.error || "알 수 없는 오류"}`);
@@ -382,11 +393,15 @@ export default function TodayFeed({
   currentUserId,
   currentUserName,
   currentUserAvatarUrl,
+  optimisticItem,
+  onOptimisticConsumed,
 }: {
   refreshKey: number;
   currentUserId?: string;
   currentUserName?: string;
   currentUserAvatarUrl?: string | null;
+  optimisticItem?: Record<string, unknown> | null;
+  onOptimisticConsumed?: () => void;
 }) {
   const [feed, setFeed] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -397,6 +412,31 @@ export default function TodayFeed({
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const cardRef = useRef<HTMLDivElement>(null);
+  // 최근 낙관적으로 추가된 아이템 ID와 타임스탬프 (fetch로 덮어쓸 때 보존)
+  const pendingOptimisticRef = useRef<Map<string, number>>(new Map());
+  const OPTIMISTIC_WINDOW_MS = 15000; // 15초간 보존
+
+  // 낙관적 아이템 즉시 피드에 추가
+  useEffect(() => {
+    if (optimisticItem && page === 1) {
+      const newItem = optimisticItem as unknown as FeedItem;
+      pendingOptimisticRef.current.set(newItem.id, Date.now());
+      setFeed((prev) => {
+        if (prev.some((item) => item.id === newItem.id)) return prev;
+        return [newItem, ...prev];
+      });
+      onOptimisticConsumed?.();
+    }
+  }, [optimisticItem]);
+
+  // 게시글 낙관적 추가 (PostComposer에서 호출)
+  const addOptimisticPost = (newPost: FeedItem) => {
+    pendingOptimisticRef.current.set(newPost.id, Date.now());
+    setFeed((prev) => {
+      if (prev.some((item) => item.id === newPost.id)) return prev;
+      return [newPost, ...prev];
+    });
+  };
 
   const handleDeletePost = async (postId: string) => {
     if (!currentUserId || deletingId) return;
@@ -417,7 +457,30 @@ export default function TodayFeed({
         const res = await fetch(`/api/feed?page=${page}`);
         if (res.ok) {
           const data = await res.json();
-          setFeed(data.items);
+          // 최근 낙관적 아이템 중 서버 응답에 없는 것들은 보존 (15초간)
+          setFeed((prev) => {
+            const now = Date.now();
+            const freshIds = new Set<string>(data.items.map((i: FeedItem) => i.id));
+            // 만료된/확인된 낙관적 아이템 정리
+            pendingOptimisticRef.current.forEach((ts, id) => {
+              if (freshIds.has(id) || now - ts > OPTIMISTIC_WINDOW_MS) {
+                pendingOptimisticRef.current.delete(id);
+              }
+            });
+            // 보존할 낙관적 아이템 (아직 서버에 안 보이는 것들)
+            const kept = prev.filter(
+              (item) =>
+                pendingOptimisticRef.current.has(item.id) &&
+                !freshIds.has(item.id)
+            );
+            const merged = [...kept, ...data.items];
+            // checkin_time 내림차순 정렬
+            return merged.sort(
+              (a, b) =>
+                new Date(b.checkin_time).getTime() -
+                new Date(a.checkin_time).getTime()
+            );
+          });
           setTotalPages(data.totalPages);
           setTotal(data.total);
         }
@@ -539,8 +602,10 @@ export default function TodayFeed({
           currentUserId={currentUserId}
           currentUserName={currentUserName}
           currentUserAvatarUrl={currentUserAvatarUrl}
-          onPosted={() => {
-            setPage(1);
+          onPosted={(newPost) => {
+            // 낙관적으로 즉시 피드 상단에 추가
+            addOptimisticPost(newPost);
+            // 백그라운드에서 서버와 동기화 (total 등 업데이트)
             setLocalRefresh((n) => n + 1);
           }}
         />

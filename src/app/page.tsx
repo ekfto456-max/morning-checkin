@@ -33,6 +33,7 @@ export default function Home() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [activeTab, setActiveTab] = useState<"home" | "seal" | "calendar" | "members" | "fund" | "my">("home");
   const [visitedTabs, setVisitedTabs] = useState<Set<string>>(new Set(["home"]));
+  const [optimisticFeedItem, setOptimisticFeedItem] = useState<Record<string, unknown> | null>(null);
 
   const switchTab = (tab: typeof activeTab) => {
     setActiveTab(tab);
@@ -87,6 +88,18 @@ export default function Home() {
   const handleCheckin = (checkin: Checkin) => {
     setTodayCheckin(checkin);
     setTotalPenalty((prev) => prev + checkin.penalty);
+    // 즉시 피드에 반영할 낙관적 아이템
+    setOptimisticFeedItem({
+      id: checkin.id,
+      user_id: user!.id,
+      user_name: user!.name,
+      avatar_url: user!.avatar_url || null,
+      checkin_time: checkin.checkin_time,
+      image_url: checkin.image_url,
+      status: checkin.status,
+      penalty: checkin.penalty,
+      type: "checkin" as const,
+    });
     setRefreshKey((prev) => prev + 1);
   };
 
@@ -319,7 +332,7 @@ export default function Home() {
             />
           </>
         )}
-        <TodayFeed refreshKey={refreshKey} currentUserId={user.id} currentUserName={user.name} currentUserAvatarUrl={user.avatar_url} />
+        <TodayFeed refreshKey={refreshKey} currentUserId={user.id} currentUserName={user.name} currentUserAvatarUrl={user.avatar_url} optimisticItem={optimisticFeedItem} onOptimisticConsumed={() => setOptimisticFeedItem(null)} />
         <Leaderboard refreshKey={refreshKey} />
         <SealFeed refreshKey={refreshKey} />
       </div>
