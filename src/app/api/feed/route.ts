@@ -40,11 +40,31 @@ export async function GET(request: NextRequest) {
     .select("*, users(name, avatar_url)")
     .not("used_at", "is", null);
 
-  // 전체 게시글
-  const { data: posts } = await supabase
+  // 전체 게시글 (JOIN 없이 가져와서 user_id 기반으로 별도 조회)
+  const { data: posts, error: postsError } = await supabase
     .from("posts")
-    .select("*, users(name, avatar_url)")
+    .select("*")
     .order("created_at", { ascending: false });
+
+  if (postsError) {
+    console.error("[feed] posts fetch error:", postsError);
+  }
+
+  // posts에 등장하는 user_id들의 유저 정보를 별도로 조회
+  const postUserIds = [...new Set((posts || []).map((p: Record<string, unknown>) => p.user_id as string).filter(Boolean))];
+  let postUsersMap: Record<string, { name: string; avatar_url: string | null }> = {};
+  if (postUserIds.length > 0) {
+    const { data: postUsers } = await supabase
+      .from("users")
+      .select("id, name, avatar_url")
+      .in("id", postUserIds);
+    (postUsers || []).forEach((u: Record<string, unknown>) => {
+      postUsersMap[u.id as string] = {
+        name: u.name as string,
+        avatar_url: (u.avatar_url as string) || null,
+      };
+    });
+  }
 
   const allItems = [
     ...(checkins || []).map((c: Record<string, unknown>) => ({
@@ -70,8 +90,8 @@ export async function GET(request: NextRequest) {
     ...(posts || []).map((p: Record<string, unknown>) => ({
       id: p.id,
       user_id: p.user_id,
-      user_name: (p.users as Record<string, string>)?.name || "알 수 없음",
-      avatar_url: (p.users as Record<string, string>)?.avatar_url || null,
+      user_name: postUsersMap[p.user_id as string]?.name || "알 수 없음",
+      avatar_url: postUsersMap[p.user_id as string]?.avatar_url || null,
       checkin_time: p.created_at as string,
       content: p.content,
       image_url: p.image_url,

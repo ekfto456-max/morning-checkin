@@ -10,17 +10,25 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from("posts")
-    .select("*, users(name)")
+    .select("*")
     .gte("created_at", startOfDay.toISOString())
     .lt("created_at", endOfDay.toISOString())
     .order("created_at", { ascending: true });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
+  // user_id 별도 조회
+  const userIds = [...new Set((data || []).map((p: Record<string, unknown>) => p.user_id as string).filter(Boolean))];
+  let usersMap: Record<string, string> = {};
+  if (userIds.length > 0) {
+    const { data: users } = await supabase.from("users").select("id, name").in("id", userIds);
+    (users || []).forEach((u: Record<string, unknown>) => { usersMap[u.id as string] = u.name as string; });
+  }
+
   const formatted = (data || []).map((p: Record<string, unknown>) => ({
     id: p.id,
     user_id: p.user_id,
-    user_name: (p.users as Record<string, string>)?.name || "알 수 없음",
+    user_name: usersMap[p.user_id as string] || "알 수 없음",
     content: p.content,
     image_url: p.image_url,
     created_at: p.created_at,
@@ -71,15 +79,25 @@ export async function POST(request: NextRequest) {
   const { data, error } = await supabase
     .from("posts")
     .insert({ user_id: userId, content: content.trim(), image_url: imageUrl })
-    .select("*, users(name)")
+    .select("*")
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
+  // 작성자 이름 별도 조회
+  let userName = "알 수 없음";
+  let avatarUrl: string | null = null;
+  const { data: userRow } = await supabase.from("users").select("name, avatar_url").eq("id", userId).single();
+  if (userRow) {
+    userName = userRow.name || "알 수 없음";
+    avatarUrl = userRow.avatar_url || null;
+  }
+
   return NextResponse.json({
     id: data.id,
     user_id: data.user_id,
-    user_name: (data as Record<string, unknown> & { users: { name: string } }).users?.name || "알 수 없음",
+    user_name: userName,
+    avatar_url: avatarUrl,
     content: data.content,
     image_url: data.image_url,
     created_at: data.created_at,
